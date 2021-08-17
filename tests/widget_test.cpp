@@ -376,3 +376,15 @@ TEST_CASE( "layout widgets", "[widget][layout]" )
            string_format( "STR:    8  DEX:    8  INT:   8  PER:     8" ) );
 }
 
+TEST_CASE( "multi-number widgets", "[widget][numbers]" )
+{
+    widget stats_w = widget_id( "test_stat_numbers" ).obj();
+    widget sound_move_pain_w = widget_id( "test_sound_move_pain_numbers" ).obj();
+
+    avatar &ava = get_avatar();
+    clear_avatar();
+
+    CHECK( stats_w.layout( ava, 32 ) == "Str: 8  Dex: 8  Int: 8  Per:   8" );
+    CHECK( sound_move_pain_w.layout( ava, 32 ) == "Sound:  0  Move: 150  Pain:    0" );
+}
+

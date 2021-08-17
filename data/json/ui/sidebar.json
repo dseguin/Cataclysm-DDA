@@ -508,11 +508,11 @@
     "widgets": [ "sound_num", "focus_num" ]
   },
   {
-    "id": "stats_layout",
+    "id": "all_stats_numbers",
     "type": "widget",
-    "style": "layout",
-    "arrange": "columns",
-    "widgets": [ "str_num", "dex_num", "int_num", "per_num" ]
+    "style": "numbers",
+    "labels": [ "Str", "Dex", "Int", "Per" ],
+    "vars": [ "stat_str", "stat_dex", "stat_int", "stat_per" ]
   },
   {
     "id": "str_dex_layout",
@@ -697,7 +697,7 @@
       "hitpoints_bottom_layout",
       "sound_fatigue_focus_layout",
       "stamina_speed_move_layout",
-      "stats_layout"
+      "all_stats_numbers"
     ]
   },
   {

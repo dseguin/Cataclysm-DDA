@@ -88,6 +88,7 @@ class widget
 
     public:
         widget() = default;
+        widget( const widget &wid ) = default;
         explicit widget( const widget_id &id ) : id( id ) {}
 
         // Attributes from JSON
@@ -119,11 +120,20 @@ class widget
         // Child widget layout arrangement / direction
         std::string _arrange;
 
+        // Multi-var widgets: list of vars to bind to, and corresponding labels
+        std::vector<widget_var> _vars;
+        std::vector<translation> _labels;
+
         // Load JSON data for a widget (uses generic factory widget_factory)
         static void load_widget( const JsonObject &jo, const std::string &src );
         void load( const JsonObject &jo, const std::string &src );
         // Reset to defaults using generic widget_factory
         static void reset();
+
+        static void check_consistency();
+        void check() const;
+        static void finalize_all();
+        void finalize();
 
         // Layout this widget within max_width, including child widgets. Calling layout on a regular
         // (non-layout style) widget is the same as show(), but will pad with spaces inside the
