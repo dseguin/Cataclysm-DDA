@@ -7493,7 +7493,8 @@ int item::wheel_area() const
 
 float item::fuel_energy() const
 {
-    return get_base_material().get_fuel_data().energy;
+    fuel_data f = get_base_material().get_fuel_data();
+    return f.energy * f.efficiency;
 }
 
 std::string item::fuel_pump_terrain() const
@@ -10666,6 +10667,23 @@ bool item::process_internal( Character *carrier, const tripoint &pos,
 
     if( wetness > 0 ) {
         wetness -= 1;
+    }
+
+    // There's likely a better way to do this
+    if( is_fuel() ) {
+        int days = to_days<int>( age() );
+        float efficiency = 1.f;
+        for( int i = 1; i < days; i++ ) {
+            material_id mat = get_base_material().id;
+            // daily degradation rates should follow (rate)^(days)
+            if( mat.str() == "diesel" || mat.str() == "jp8" ) {
+                efficiency *= 0.997;    // 6-12 months
+            } else {
+                efficiency *= 0.995;    // 3-6 months
+            }
+        }
+        get_base_material().get_fuel_data().set_efficiency( efficiency );
+        //debugmsg( "Fuel efficiency for %s is %f", get_base_material().id.str(), get_base_material().get_fuel_data().efficiency );
     }
 
     // Remaining stuff is only done for active items.

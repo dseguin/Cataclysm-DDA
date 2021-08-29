@@ -44,6 +44,7 @@ struct fuel_data {
     public:
         /** Energy of the fuel (kilojoules per charge) */
         float energy = 0.0f;
+        float efficiency = 1.0f;
         fuel_explosion_data explosion_data;
         std::string pump_terrain = "t_null";
         bool is_perpetual_fuel = false;
@@ -51,6 +52,7 @@ struct fuel_data {
         bool was_loaded = false;
         void load( const JsonObject &jsobj );
         void deserialize( JsonIn &jsin );
+        void set_efficiency( float e );
 };
 
 class material_type

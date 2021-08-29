@@ -322,6 +322,11 @@ void fuel_data::deserialize( JsonIn &jsin )
     load( jo );
 }
 
+void fuel_data::set_efficiency( float e )
+{
+    efficiency = e;
+}
+
 bool fuel_explosion_data::is_empty()
 {
     return explosion_chance_cold == 0 && explosion_chance_hot == 0 && explosion_factor == 0.0f &&
