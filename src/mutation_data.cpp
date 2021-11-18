@@ -313,6 +313,9 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "name", raw_name );
     mandatory( jo, was_loaded, "description", raw_desc );
     mandatory( jo, was_loaded, "points", points );
+    if( jo.has_object( "difficulty_impact" ) ) {
+        impact_on_difficulty.load( jo.get_object( "difficulty_impact" ) );
+    }
 
     optional( jo, was_loaded, "vitamin_cost", vitamin_cost, 100 );
     optional( jo, was_loaded, "visibility", visibility, 0 );

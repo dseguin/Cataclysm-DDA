@@ -15,6 +15,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "damage.h"
+#include "difficulty_impact.h"
 #include "hash_utils.h"
 #include "memory_fast.h"
 #include "optional.h"
@@ -193,6 +194,8 @@ struct mutation_branch {
         int visibility = 0;
         int ugliness   = 0;
         int cost       = 0;
+        // How does the mutation affect the game's difficulty?
+        difficulty_impact impact_on_difficulty;
         // costs are consumed every cooldown turns,
         time_duration cooldown   = 0_turns;
         // bodytemp elements:
