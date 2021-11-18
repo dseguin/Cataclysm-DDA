@@ -477,6 +477,11 @@ cata::optional<achievement_id> scenario::get_requirement() const
     return _requirement;
 }
 
+const difficulty_impact &scenario::difficulty() const
+{
+    return _difficulty_impact;
+}
+
 bool scenario::custom_start_date() const
 {
     return _custom_start_date;
