@@ -3,6 +3,7 @@
 #define CATA_SRC_DIFFICULTY_IMPACT_H
 
 #include <string>
+#include <map>
 
 #include "json.h"
 #include "translations.h"
@@ -51,6 +52,14 @@ struct difficulty_opt {
 */
 struct difficulty_impact {
     public:
+        enum difficulty_source {
+            NONE,
+            SCENARIO,
+            PROFFESION,
+            HOBBY,
+            MUTATION
+        };
+
         difficulty_impact_id id;
 
         void load( const JsonObject &jo, const std::string &src );
@@ -64,9 +73,11 @@ struct difficulty_impact {
         const translation &name() const {
             return name_;
         }
+        float weight( difficulty_source src ) const;
     private:
         bool was_loaded = false;
         translation name_;
+        std::map<difficulty_source, float> weight_;
         friend class generic_factory<difficulty_impact>;
 };
 
