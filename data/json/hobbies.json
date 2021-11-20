@@ -362,7 +362,7 @@
     "points": 3,
     "skills": [ { "level": 3, "name": "dodge" }, { "level": 2, "name": "throw" }, { "level": 1, "name": "swimming" } ],
     "difficulty": [
-      [ "combat", "normal" ],
+      [ "combat", "easy" ],
       [ "mobility", "normal" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
@@ -753,7 +753,7 @@
     "missions": [ "MISSION_SKATES" ],
     "difficulty": [
       [ "combat", "normal" ],
-      [ "mobility", "normal" ],
+      [ "mobility", "easy" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
       [ "social", "normal" ]
@@ -920,7 +920,7 @@
     "points": 2,
     "skills": [ { "level": 2, "name": "throw" }, { "level": 2, "name": "dodge" }, { "level": 1, "name": "swimming" } ],
     "difficulty": [
-      [ "combat", "normal" ],
+      [ "combat", "easy" ],
       [ "mobility", "normal" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
@@ -1070,7 +1070,7 @@
     "missions": [ "MISSION_SKATES" ],
     "difficulty": [
       [ "combat", "easy" ],
-      [ "mobility", "normal" ],
+      [ "mobility", "easy" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
       [ "social", "normal" ]
@@ -1088,7 +1088,7 @@
     "missions": [ "MISSION_SKATES" ],
     "difficulty": [
       [ "combat", "easy" ],
-      [ "mobility", "normal" ],
+      [ "mobility", "easy" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
       [ "social", "normal" ]
@@ -1222,7 +1222,7 @@
       [ "mobility", "normal" ],
       [ "crafting", "normal" ],
       [ "environment", "normal" ],
-      [ "social", "easy" ]
+      [ "social", "normal" ]
     ]
   },
   {
