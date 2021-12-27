@@ -22,9 +22,11 @@ static const widget_id widget_test_morale_num( "test_morale_num" );
 static const widget_id widget_test_move_num( "test_move_num" );
 static const widget_id widget_test_per_num( "test_per_num" );
 static const widget_id widget_test_pool_graph( "test_pool_graph" );
+static const widget_id widget_test_sound_move_pain_numbers( "test_sound_move_pain_numbers" );
 static const widget_id widget_test_speed_num( "test_speed_num" );
 static const widget_id widget_test_stamina_graph( "test_stamina_graph" );
 static const widget_id widget_test_stamina_num( "test_stamina_num" );
+static const widget_id widget_test_stat_numbers( "test_stat_numbers" );
 static const widget_id widget_test_stat_panel( "test_stat_panel" );
 static const widget_id widget_test_str_num( "test_str_num" );
 static const widget_id widget_test_text_widget( "test_text_widget" );
@@ -378,8 +380,8 @@ TEST_CASE( "layout widgets", "[widget][layout]" )
 
 TEST_CASE( "multi-number widgets", "[widget][numbers]" )
 {
-    widget stats_w = widget_id( "test_stat_numbers" ).obj();
-    widget sound_move_pain_w = widget_id( "test_sound_move_pain_numbers" ).obj();
+    widget stats_w = widget_test_stat_numbers.obj();
+    widget sound_move_pain_w = widget_test_sound_move_pain_numbers.obj();
 
     avatar &ava = get_avatar();
     clear_avatar();
