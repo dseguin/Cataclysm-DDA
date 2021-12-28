@@ -88,8 +88,29 @@ class widget
 
     public:
         widget() = default;
-        widget( const widget &wid ) = default;
         explicit widget( const widget_id &id ) : id( id ) {}
+        // Copy constructor
+        widget( const widget &wgt ) : widget( wgt.id ) {
+            _style = wgt._style;
+            _label = wgt._label;
+            _var = wgt._var;
+            _var_min = wgt._var_min;
+            _var_max = wgt._var_max;
+            _bp_id = wgt._bp_id;
+            _width = wgt._width;
+            _symbols = wgt._symbols;
+            _fill = wgt._fill;
+            _arrange = wgt._arrange;
+            // Not copied:
+            // _strings, _colors, _widgets, _vars, _labels ?
+        }
+        // With copy constructor defined, implicit copy assignment operator is deprecated
+        widget &operator=( const widget &wgt ) {
+            cata_assert( &wgt != this );
+            widget temp( wgt );
+            *this = std::move( temp );
+            return *this;
+        };
 
         // Attributes from JSON
         // ----
