@@ -644,6 +644,9 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
     std::string ret;
     if( _style == "layout" || _style == "graphs" || _style == "numbers" ) {
         // "graphs" and "numbers" are hybrid graph/number style with layout
+        if( _widgets.empty() ) {
+            return "EMPTY WIDGETS!";
+        }
 
         // TODO: Use "arrange" field to support row-based layout
         // Divide available width equally among all widgets
