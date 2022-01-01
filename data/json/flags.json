@@ -1837,5 +1837,77 @@
     "type": "json_flag",
     "info": "Invalid when the target position is <bad>too far</bad> or <bad>too bright</bad>.",
     "name": "laser sight"
+  },
+  {
+    "id": "EXO_PSU",
+    "name": "PSU",
+    "type": "json_flag",
+    "info": "This is meant for an exoskeleton PSU hardpoint."
+  },
+  {
+    "id": "EXO_SMALL_GADGET",
+    "name": "Small gadget",
+    "type": "json_flag",
+    "info": "This is meant for small exoskeleton gadgets, 1 L or less."
+  },
+  {
+    "id": "EXO_HELMET_GADGET",
+    "name": "Helmet gadget",
+    "type": "json_flag",
+    "info": "This is meant for helmet-specific gadgets."
+  },
+  {
+    "id": "EXO_MEDIUM_GADGET",
+    "name": "Medium gadget",
+    "type": "json_flag",
+    "info": "This is meant for medium exoskeleton gadgets, between 1 L and 5 L."
+  },
+  {
+    "id": "EXO_LARGE_GADGET",
+    "name": "Large gadget",
+    "type": "json_flag",
+    "info": "This is meant for large exoskeleton gadgets, larger than 5 L."
+  },
+  {
+    "id": "EXO_HELMET_PLATE",
+    "name": "Helmet plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton helmet plating."
+  },
+  {
+    "id": "EXO_TORSO_PLATE",
+    "name": "Torso plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton torso plating."
+  },
+  {
+    "id": "EXO_PSU_PLATE",
+    "name": "PSU plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton PSU plating."
+  },
+  {
+    "id": "EXO_ARM_PLATE",
+    "name": "Arm plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton arm plating."
+  },
+  {
+    "id": "EXO_GLOVE_PLATE",
+    "name": "Glove plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton arm plating."
+  },
+  {
+    "id": "EXO_LEG_PLATE",
+    "name": "Leg plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton leg plating."
+  },
+  {
+    "id": "EXO_BOOT_PLATE",
+    "name": "Boot plate",
+    "type": "json_flag",
+    "info": "This is meant for exoskeleton foot plating."
   }
 ]
