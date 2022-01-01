@@ -104,6 +104,7 @@
 #include "try_parse_integer.h"
 #include "type_id.h"
 #include "ui.h"
+#include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
@@ -2035,6 +2036,117 @@ cata::optional<int> iuse::extinguisher( Character *p, item *it, bool, const trip
     }
 
     return it->type->charges_to_use();
+}
+
+class exosuit_interact
+{
+    public:
+        static player_activity run( item *it ) {
+            exosuit_interact menu( it );
+            menu.interact_loop();
+            return menu.act;
+        }
+
+    private:
+        explicit exosuit_interact( item *it ) : suit( it ), ctxt( "", keyboard_mode::keycode ) {
+            ctxt.register_directions();
+            ctxt.register_action( "CONFIRM" );
+            ctxt.register_action( "ANY_INPUT" );
+        }
+        ~exosuit_interact() = default;
+
+        item *suit = nullptr;
+        weak_ptr_fast<ui_adaptor> ui;
+        player_activity act;
+        input_context ctxt;
+        catacurses::window w_info;
+        catacurses::window w_menu;
+        int cur_pocket = 0;
+
+        const int width_info = 40;
+        const int width_menu = 40;
+
+        void init_windows() {
+            const point topleft( TERMX - ( width_info + width_menu ), 0 );
+            w_menu = catacurses::newwin( TERMY, width_menu, topleft );
+            w_info = catacurses::newwin( TERMY, width_info, topleft + point( width_menu, 0 ) );
+        }
+
+        void draw_menu() {
+            werase( w_menu );
+            int row = 0;
+            for( const item_pocket *pkt : suit->get_contents().get_all_reloadable_pockets() ) {
+                mvwprintz( w_menu, point( 0, row ), c_white, pkt->name_as_description || pkt->get_description().empty() ? pkt->get_name().translated() : pkt->get_description().translated() );
+                row++;
+            }
+            wnoutrefresh( w_menu );
+        }
+
+        void draw_iteminfo() {
+            std::vector<iteminfo> dummy;
+            std::vector<iteminfo> suitinfo;
+            suit->get_contents().get_all_reloadable_pockets()[cur_pocket]->contents_info( suitinfo, cur_pocket, true );
+            item_info_data data( suit->tname(), suit->type_name(), suitinfo, dummy );
+            data.without_getch = true;
+            data.without_border = true;
+            data.scrollbar_left = false;
+            data.use_full_win = true;
+            data.padding = 0;
+            draw_item_info( w_info, data );
+        }
+
+        shared_ptr_fast<ui_adaptor> create_or_get_ui_adaptor() {
+            shared_ptr_fast<ui_adaptor> current_ui = ui.lock();
+            if( !current_ui ) {
+                ui = current_ui = make_shared_fast<ui_adaptor>();
+                current_ui->on_screen_resize( [this]( ui_adaptor & cui ) {
+                    init_windows();
+                    cui.position_from_window( catacurses::stdscr );
+                } );
+                current_ui->mark_resize();
+                current_ui->on_redraw( [this]( const ui_adaptor & ) {
+                    draw_menu();
+                    draw_iteminfo();
+                } );
+            }
+            return current_ui;
+        }
+
+        void interact_loop() {
+            bool done = false;
+            shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
+            while( !done ) {
+                ui_manager::redraw();
+                const std::string action = ctxt.handle_input();
+                if( action == "CONFIRM" ) {
+                    done = true;
+                } else if( action == "UP" ) {
+                    done = true;
+                } else if( action == "DOWN" ) {
+                    done = true;
+                } else if( action == "ANY_INPUT" ) {
+                    done = true;
+                }
+                add_msg( "DEBUG: action = %s", action );
+                // Player activity queued up, close interaction menu
+                if( !act.is_null() || !get_player_character().activity.is_null() ) {
+                    done = true;
+                }
+            }
+        }
+};
+
+cata::optional<int> iuse::manage_exosuit( Character *p, item *it, bool, const tripoint & )
+{
+    if( !p->is_avatar() ) {
+        return cata::nullopt;
+    }
+    if( it->get_contents().get_all_reloadable_pockets().empty() ) {
+        add_msg( m_warning, _( "Your %s does not have any reloadable pockets." ), it->tname() );
+        return cata::nullopt;
+    }
+    exosuit_interact::run( it );
+    return cata::nullopt;
 }
 
 cata::optional<int> iuse::rm13armor_off( Character *p, item *it, bool, const tripoint & )
