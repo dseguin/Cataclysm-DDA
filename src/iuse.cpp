@@ -2099,6 +2099,7 @@ class exosuit_interact
 
         void init_windows() {
             const point topleft( TERMX / 2 - ( width_info + width_menu + 3 ) / 2, TERMY / 2 - height / 2 );
+            //NOLINTNEXTLINE(cata-use-named-point-constants)
             w_menu = catacurses::newwin( height - 2, width_menu, topleft + point( 1, 1 ) );
             w_info = catacurses::newwin( height - 2, width_info, topleft + point( 2 + width_menu, 1 ) );
             w_border = catacurses::newwin( height, width_info + width_menu + 3, topleft );
@@ -2121,7 +2122,7 @@ class exosuit_interact
             item_pocket *pkt = suit->get_contents().get_all_contained_pockets().value()[cur_pocket];
             pkt->general_info( suitinfo, cur_pocket, true );
             pkt->contents_info( suitinfo, cur_pocket, true );
-            item_info_data data( suit->tname(), suit->type_name(), suitinfo, dummy, scroll_pos );
+            item_info_data data( "", suit->type_name(), suitinfo, dummy, scroll_pos );
             data.without_getch = true;
             data.without_border = true;
             data.scrollbar_left = false;
@@ -2140,7 +2141,7 @@ class exosuit_interact
                 } );
                 current_ui->mark_resize();
                 current_ui->on_redraw( [this]( const ui_adaptor & ) {
-                    draw_border( w_border, c_white, suit->tname(), c_light_green );
+                    draw_border( w_border, c_white, suit->tname( 1U, true, 0U, false ), c_light_green );
                     for( int i = 1; i < height - 1; i++ ) {
                         mvwputch( w_border, point( width_menu + 1, i ), c_white, LINE_XOXO );
                     }
@@ -2246,7 +2247,7 @@ class exosuit_interact
 
             //~ Prompt the player to select an item to attach to the modular exoskeleton's pocket (%s)
             uilist imenu( string_format( _( "Which module to attach to the %s?" ), get_pocket_name( pkt ) ), {} );
-            for( const item_location i : candidates ) {
+            for( const item_location &i : candidates ) {
                 imenu.addentry( -1, true, MENU_AUTOASSIGN, i->tname() );
             }
             imenu.query();
@@ -2280,7 +2281,7 @@ cata::optional<int> iuse::manage_exosuit( Character *p, item *it, bool, const tr
         return cata::nullopt;
     }
     if( !it->get_contents().get_all_contained_pockets().success() ) {
-        add_msg( m_warning, _( "Your %s does not have any reloadable pockets." ), it->tname() );
+        add_msg( m_warning, _( "Your %s does not have any pockets." ), it->tname() );
         return cata::nullopt;
     }
     exosuit_interact::run( it );
