@@ -2089,7 +2089,7 @@ class exosuit_interact
                 return pkt->get_pocket_data()->pocket_name.translated();
             }
             const std::set<flag_id> flags = pkt->get_pocket_data()->get_flag_restrictions();
-            return enumerate_as_string( flags, []( const flag_id &fid ) {
+            return enumerate_as_string( flags, []( const flag_id & fid ) {
                 if( fid->name().empty() ) {
                     return fid.str();
                 }
@@ -2164,7 +2164,7 @@ class exosuit_interact
                     done = true;
                 } else if( action == "CONFIRM" ) {
                     scroll_pos = 0;
-                    // TODO
+                    insert_replace_mod( suit->get_contents().get_all_contained_pockets().value()[cur_pocket], suit );
                 } else if( action == "UP" ) {
                     cur_pocket--;
                     if( cur_pocket < 0 ) {
@@ -2189,6 +2189,88 @@ class exosuit_interact
                     done = true;
                 }
             }
+        }
+
+        bool insert_replace_mod( item_pocket *pkt, item *it ) {
+            Character &c = get_player_character();
+            map &here = get_map();
+            const std::set<flag_id> flags = pkt->get_pocket_data()->get_flag_restrictions();
+            if( flags.empty() ) {
+                //~ Modular exoskeletons require pocket restrictions to insert modules. %s = pocket name.
+                popup( _( "%s doesn't define any restrictions for modules!" ), get_pocket_name( pkt ) );
+                return false;
+            }
+
+            // If pocket already contains a module, ask to unload or replace
+            const bool not_empty = !pkt->empty();
+            if( not_empty ) {
+                std::string mod_name = pkt->all_items_top().front()->tname();
+                //~ Prompt the player to handle the module inside the modular exoskeleton
+                uilist amenu( _( "What to do with the existing module?" ), {
+                    string_format( _( "Unload the %s" ), mod_name ),
+                    string_format( _( "Replace the %s" ), mod_name )
+                } );
+                int ret = amenu.ret;
+                if( ret < 0 || ret > 1 ) {
+                    return false;
+                } else if( ret == 0 ) {
+                    // Unload existing module
+                    pkt->remove_items_if( [&c, &here]( const item & i ) {
+                        here.add_item_or_charges( c.pos(), i );
+                        return true;
+                    } );
+                    return false;
+                }
+            }
+
+            const item_filter filter = [&flags, pkt, it]( const item & i ) {
+                return i.has_any_flag( flags ) && ( pkt->empty() || !it->has_item( i ) );
+            };
+
+            std::vector<item_location> candidates;
+            for( item *i : c.items_with( filter ) ) {
+                candidates.emplace_back( c, i );
+            }
+            for( const tripoint &p : here.points_in_radius( c.pos(), PICKUP_RANGE ) ) {
+                for( item &i : here.i_at( p ) ) {
+                    if( filter( i ) ) {
+                        candidates.emplace_back( map_cursor( p ), &i );
+                    }
+                }
+            }
+            if( candidates.empty() ) {
+                //~ The player has nothing that fits in the modular exoskeleton's pocket
+                popup( _( "You don't have anything compatible with this module!" ) );
+                return false;
+            }
+
+            //~ Prompt the player to select an item to attach to the modular exoskeleton's pocket (%s)
+            uilist imenu( string_format( _( "Which module to attach to the %s?" ), get_pocket_name( pkt ) ), {} );
+            for( const item_location i : candidates ) {
+                imenu.addentry( -1, true, MENU_AUTOASSIGN, i->tname() );
+            }
+            imenu.query();
+            int ret = imenu.ret;
+            if( ret < 0 || static_cast<size_t>( ret ) >= candidates.size() ) {
+                // Cancelled
+                return false;
+            }
+
+            // Unload existing module
+            if( not_empty ) {
+                pkt->remove_items_if( [&c, &here]( const item & i ) {
+                    here.add_item_or_charges( c.pos(), i );
+                    return true;
+                } );
+            }
+
+            if( pkt->insert_item( *candidates[ret] ).success() ) {
+                candidates[ret].remove_item();
+                return true;
+            }
+            debugmsg( "Could not insert item \"%s\" into pocket \"%s\"", candidates[ret]->type_name(),
+                      get_pocket_name( pkt ) );
+            return false;
         }
 };
 
