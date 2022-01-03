@@ -2169,6 +2169,48 @@ std::pair<std::string, nc_color> display::weather_text_color( const Character &u
     }
 }
 
+static std::string get_compass_for_direction( const cardinal_direction dir, int max_width )
+{
+    const int d = static_cast<int>( dir );
+    const monster_visible_info &mon_visible = get_avatar().get_mon_visible();
+    std::vector<std::pair<std::string, nc_color>> syms;
+    for( npc *n : mon_visible.unique_types[d] ) {
+        switch( n->get_attitude() ) {
+            case NPCATT_KILL:
+                syms.emplace_back( "@", c_red );
+                break;
+            case NPCATT_FOLLOW:
+                syms.emplace_back( "@", c_light_green );
+                break;
+            default:
+                syms.emplace_back( "@", c_pink );
+                break;
+        }
+    }
+    for( const std::pair<const mtype *, int> &m : mon_visible.unique_mons[d] ) {
+        syms.emplace_back( m.first->sym, m.first->color );
+    }
+
+    std::string ret;
+    for( int i = 0; i < static_cast<int>( syms.size() ); i++ ) {
+        if( i >= max_width - 1 ) {
+            ret += colorize( "+", c_white );
+            break;
+        }
+        ret += colorize( syms[i].first, syms[i].second );
+    }
+    return ret;
+}
+
+std::pair<std::string, nc_color> display::compass_text_color( const cardinal_direction dir,
+        int width )
+{
+    if( dir == cardinal_direction::num_cardinal_directions ) {
+        return { "", c_white };
+    }
+    return { get_compass_for_direction( dir, width ), c_white };
+}
+
 static void draw_health_classic( const draw_args &args )
 {
     const avatar &u = args._ava;
