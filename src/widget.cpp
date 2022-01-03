@@ -79,6 +79,8 @@ std::string enum_to_string<widget_var>( widget_var data )
         // Compass
         case widget_var::compass_text:
             return "compass_text";
+        case widget_var::compass_legend_text:
+            return "compass_legend_text";
         // Base stats
         case widget_var::stat_str:
             return "stat_str";
@@ -443,6 +445,7 @@ bool widget::uses_text_function()
         case widget_var::activity_text:
         case widget_var::body_temp_text:
         case widget_var::compass_text:
+        case widget_var::compass_legend_text:
         case widget_var::date_text:
         case widget_var::env_temp_text:
         case widget_var::fatigue_text:
@@ -554,6 +557,11 @@ std::string widget::color_text_function_string( const avatar &ava )
             // Compass color is specific to individual threats.
             // Skip colorization.
             desc = display::compass_text_color( _direction, _width );
+            return desc.first;
+        case widget_var::compass_legend_text:
+            // Compass color is specific to individual threats.
+            // Skip colorization.
+            desc = display::compass_legend_text_color( _width );
             return desc.first;
         default:
             debugmsg( "Unexpected widget_var %s - no text_color function defined",
@@ -729,10 +737,15 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
         std::string shown = show( ava );
         const std::string tlabel = _label.translated();
         // Width used by label, ": " and value, using utf8_width to ignore color tags
-        unsigned int used_width = utf8_width( tlabel, true ) + 2 + utf8_width( shown, true );
+        unsigned int used_width = utf8_width( shown, true );
 
-        // Label and ": " first
-        ret += tlabel + ": ";
+        // If the label is blank or omitted, don't reserve space for it
+        if( !tlabel.empty() ) {
+            used_width += utf8_width( tlabel, true ) + 2;
+            // Label and ": " first
+            ret += tlabel + ": ";
+        }
+
         // then enough padding to fit max_width
         if( used_width < max_width ) {
             ret += std::string( max_width - used_width, ' ' );

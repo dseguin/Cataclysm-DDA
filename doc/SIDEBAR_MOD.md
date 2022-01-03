@@ -204,6 +204,7 @@ Some vars refer to text descriptors. These must use style "text". Examples:
 | `weight_text`   | "Emaciated", "Normal", "Overweight", etc.
 | `date_text`     | Current day within season, like "Summer, day 15"
 | `compass_text`  | A compass direction (ex: NE), displaying visible creatures in that direction
+| `compass_legend_text` | A list of creatures visible by the player, corresponding to compass symbols
 
 For example, a widget to show the current STR stat would define this "var":
 

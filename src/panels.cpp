@@ -2202,6 +2202,54 @@ static std::string get_compass_for_direction( const cardinal_direction dir, int 
     return ret;
 }
 
+static std::string get_compass_legend( const int max_width )
+{
+    int wavail = max_width;
+    const monster_visible_info &mon_visible = get_avatar().get_mon_visible();
+    //~ Creature name format in compass legend. 1$ = symbol, 2$ = name. ex: "Z shocker zombie"
+    const std::string name_fmt = _( "%1$s %2$s" );
+    std::vector<std::string> names;
+    for( const std::vector<npc *> &nv : mon_visible.unique_types ) {
+        for( const npc *n : nv ) {
+            if( wavail < 0 ) {
+                break;
+            }
+            std::string name;
+            switch( n->get_attitude() ) {
+                case NPCATT_KILL:
+                    name = colorize( "@", c_red );
+                    break;
+                case NPCATT_FOLLOW:
+                    name = colorize( "@", c_light_green );
+                    break;
+                default:
+                    name = colorize( "@", c_pink );
+                    break;
+            }
+            name = string_format( name_fmt, name, n->name );
+            wavail -= utf8_width( name, true );
+            names.emplace_back( name );
+        }
+    }
+    std::map<const mtype *, int> mlist;
+    for( const auto &mv : mon_visible.unique_mons ) {
+        for( const std::pair<const mtype *, int> &m : mv ) {
+            mlist[m.first] += m.second;
+        }
+    }
+    for( const auto &m : mlist ) {
+        if( wavail < 0 ) {
+            break;
+        }
+        std::string name = m.second > 1 ? string_format( "%d ", m.second ) : "";
+        name += string_format( name_fmt, colorize( m.first->sym, m.first->color ),
+                               m.first->nname( m.second ) );
+        wavail -= utf8_width( name, true );
+        names.emplace_back( name );
+    }
+    return enumerate_as_string( names, enumeration_conjunction::none );
+}
+
 std::pair<std::string, nc_color> display::compass_text_color( const cardinal_direction dir,
         int width )
 {
@@ -2209,6 +2257,11 @@ std::pair<std::string, nc_color> display::compass_text_color( const cardinal_dir
         return { "", c_white };
     }
     return { get_compass_for_direction( dir, width ), c_white };
+}
+
+std::pair<std::string, nc_color> display::compass_legend_text_color( int width )
+{
+    return { get_compass_legend( width ), c_white };
 }
 
 static void draw_health_classic( const draw_args &args )

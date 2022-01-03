@@ -75,11 +75,17 @@
     "//": "An empty space indicating threats nearby",
     "id": "compass_local_text",
     "type": "widget",
-    "label": " ",
     "style": "text",
     "direction": "L",
     "var": "compass_text",
     "width": 6
+  },
+  {
+    "id": "compass_legend_text",
+    "type": "widget",
+    "style": "text",
+    "var": "compass_legend_text",
+    "width": 100
   },
   {
     "id": "compass_top_layout",
@@ -108,6 +114,6 @@
     "label": "Compass Alt",
     "style": "layout",
     "arrange": "rows",
-    "widgets": [ "compass_top_layout", "compass_middle_layout", "compass_bottom_layout" ]
+    "widgets": [ "compass_top_layout", "compass_middle_layout", "compass_bottom_layout", "compass_legend_text" ]
   }
 ]

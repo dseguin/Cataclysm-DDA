@@ -32,6 +32,8 @@ static const widget_id widget_test_color_number_widget( "test_color_number_widge
 static const widget_id widget_test_compass_N( "test_compass_N" );
 static const widget_id widget_test_compass_N_nodir_nowidth( "test_compass_N_nodir_nowidth" );
 static const widget_id widget_test_compass_N_nowidth( "test_compass_N_nowidth" );
+static const widget_id widget_test_compass_legend_100( "test_compass_legend_100" );
+static const widget_id widget_test_compass_legend_5( "test_compass_legend_5" );
 static const widget_id widget_test_dex_num( "test_dex_num" );
 static const widget_id widget_test_focus_num( "test_focus_num" );
 static const widget_id widget_test_hp_head_graph( "test_hp_head_graph" );
@@ -418,6 +420,8 @@ TEST_CASE( "compass widget", "[widget]" )
     widget c5s_N = widget_test_compass_N.obj();
     widget c5s_N_nowidth = widget_test_compass_N_nowidth.obj();
     widget c5s_N_nodir_nowidth = widget_test_compass_N_nodir_nowidth.obj();
+    widget c5s_legend5 = widget_test_compass_legend_5.obj();
+    widget c5s_legend100 = widget_test_compass_legend_100.obj();
 
     avatar &ava = get_avatar();
     clear_avatar();
@@ -431,6 +435,8 @@ TEST_CASE( "compass widget", "[widget]" )
         CHECK( c5s_N.layout( ava ) == "N: " );
         CHECK( c5s_N_nowidth.layout( ava ) == "N: " );
         CHECK( c5s_N_nodir_nowidth.layout( ava ) == "N: " );
+        CHECK( c5s_legend5.layout( ava ).empty() );
+        CHECK( c5s_legend100.layout( ava ).empty() );
     }
 
     SECTION( "1 monster NE" ) {
@@ -444,6 +450,10 @@ TEST_CASE( "compass widget", "[widget]" )
         CHECK( c5s_N.layout( ava ) == "N: " );
         CHECK( c5s_N_nowidth.layout( ava ) == "N: " );
         CHECK( c5s_N_nodir_nowidth.layout( ava ) == "N: " );
+        CHECK( c5s_legend5.layout( ava ) ==
+               "<color_c_white>B</color> monster producing CBMs when dissected" );
+        CHECK( c5s_legend100.layout( ava ) ==
+               "<color_c_white>B</color> monster producing CBMs when dissected" );
     }
 
     SECTION( "1 monster N" ) {
@@ -457,6 +467,10 @@ TEST_CASE( "compass widget", "[widget]" )
         CHECK( c5s_N.layout( ava ) == "N: <color_c_white>B</color>" );
         CHECK( c5s_N_nowidth.layout( ava ) == "N: <color_c_white>+</color>" );
         CHECK( c5s_N_nodir_nowidth.layout( ava ) == "N: " );
+        CHECK( c5s_legend5.layout( ava ) ==
+               "<color_c_white>B</color> monster producing CBMs when dissected" );
+        CHECK( c5s_legend100.layout( ava ) ==
+               "<color_c_white>B</color> monster producing CBMs when dissected" );
     }
 
     SECTION( "3 same monsters N" ) {
@@ -475,6 +489,10 @@ TEST_CASE( "compass widget", "[widget]" )
         CHECK( c5s_N.layout( ava ) == "N: <color_c_white>B</color>" );
         CHECK( c5s_N_nowidth.layout( ava ) == "N: <color_c_white>+</color>" );
         CHECK( c5s_N_nodir_nowidth.layout( ava ) == "N: " );
+        CHECK( c5s_legend5.layout( ava ) ==
+               "3 <color_c_white>B</color> monster producing CBMs when dissected" );
+        CHECK( c5s_legend100.layout( ava ) ==
+               "3 <color_c_white>B</color> monster producing CBMs when dissected" );
     }
 
     SECTION( "3 different monsters N" ) {
@@ -494,6 +512,11 @@ TEST_CASE( "compass widget", "[widget]" )
                "N: <color_c_white>B</color><color_c_white>B</color><color_c_white>S</color>" );
         CHECK( c5s_N_nowidth.layout( ava ) == "N: <color_c_white>+</color>" );
         CHECK( c5s_N_nodir_nowidth.layout( ava ) == "N: " );
+        CHECK( c5s_legend5.layout( ava ) == "<color_c_white>S</color> shearable monster" );
+        CHECK( c5s_legend100.layout( ava ) ==
+               "<color_c_white>S</color> shearable monster, "
+               "<color_c_white>B</color> monster producing bovine samples when dissected, "
+               "<color_c_white>B</color> monster producing CBMs when dissected" );
     }
 }
 

@@ -100,6 +100,7 @@ std::pair<std::string, nc_color> weather_text_color( const Character &u );
 
 // Get visible threats by cardinal direction
 std::pair<std::string, nc_color> compass_text_color( const cardinal_direction dir, int width );
+std::pair<std::string, nc_color> compass_legend_text_color( int width );
 
 // Define color for displaying the body temperature
 nc_color bodytemp_color( const Character &u, const bodypart_id &bp );
