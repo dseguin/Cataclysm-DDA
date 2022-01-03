@@ -86,6 +86,30 @@
     "style": "text"
   },
   {
+    "id": "test_compass_N_nodir_nowidth",
+    "type": "widget",
+    "label": "N",
+    "var": "compass_text",
+    "style": "text"
+  },
+  {
+    "id": "test_compass_N_nowidth",
+    "type": "widget",
+    "label": "N",
+    "var": "compass_text",
+    "style": "text",
+    "direction": "N"
+  },
+  {
+    "id": "test_compass_N",
+    "type": "widget",
+    "label": "N",
+    "var": "compass_text",
+    "style": "text",
+    "direction": "N",
+    "width": 4
+  },
+  {
     "id": "test_speed_num",
     "type": "widget",
     "label": "SPEED",
