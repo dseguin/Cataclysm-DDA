@@ -2202,9 +2202,17 @@ static std::string get_compass_for_direction( const cardinal_direction dir, int 
     return ret;
 }
 
-static std::string get_compass_legend( const int max_width )
+std::string display::colorized_compass_text_color( const cardinal_direction dir, int width )
 {
-    int wavail = max_width;
+    if( dir == cardinal_direction::num_cardinal_directions ) {
+        return "";
+    }
+    return get_compass_for_direction( dir, width );
+}
+
+std::string display::colorized_compass_legend_text_color( int width )
+{
+    int wavail = width;
     const monster_visible_info &mon_visible = get_avatar().get_mon_visible();
     //~ Creature name format in compass legend. 1$ = symbol, 2$ = name. ex: "Z shocker zombie"
     const std::string name_fmt = _( "%1$s %2$s" );
@@ -2248,20 +2256,6 @@ static std::string get_compass_legend( const int max_width )
         names.emplace_back( name );
     }
     return enumerate_as_string( names, enumeration_conjunction::none );
-}
-
-std::pair<std::string, nc_color> display::compass_text_color( const cardinal_direction dir,
-        int width )
-{
-    if( dir == cardinal_direction::num_cardinal_directions ) {
-        return { "", c_white };
-    }
-    return { get_compass_for_direction( dir, width ), c_white };
-}
-
-std::pair<std::string, nc_color> display::compass_legend_text_color( int width )
-{
-    return { get_compass_legend( width ), c_white };
 }
 
 static void draw_health_classic( const draw_args &args )

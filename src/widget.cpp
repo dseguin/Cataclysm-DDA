@@ -477,6 +477,7 @@ bool widget::uses_text_function()
 std::string widget::color_text_function_string( const avatar &ava )
 {
     std::string ret;
+    bool apply_color = true;
     std::pair<std::string, nc_color> desc;
     // Give a default color (some widget_vars do not define one)
     desc.second = c_light_gray;
@@ -554,21 +555,19 @@ std::string widget::color_text_function_string( const avatar &ava )
             desc = display::wind_text_color( ava );
             break;
         case widget_var::compass_text:
-            // Compass color is specific to individual threats.
-            // Skip colorization.
-            desc = display::compass_text_color( _direction, _width );
-            return desc.first;
+            desc.first = display::colorized_compass_text_color( _direction, _width );
+            apply_color = false; // Already colorized
+            break;
         case widget_var::compass_legend_text:
-            // Compass color is specific to individual threats.
-            // Skip colorization.
-            desc = display::compass_legend_text_color( _width );
-            return desc.first;
+            desc.first = display::colorized_compass_legend_text_color( _width );
+            apply_color = false; // Already colorized
+            break;
         default:
             debugmsg( "Unexpected widget_var %s - no text_color function defined",
                       io::enum_to_string<widget_var>( _var ) );
             return _( "???" );
     }
-    ret += colorize( desc.first, desc.second );
+    ret += apply_color ? colorize( desc.first, desc.second ) : desc.first;
     return ret;
 }
 
