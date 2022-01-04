@@ -2210,18 +2210,14 @@ std::string display::colorized_compass_text_color( const cardinal_direction dir,
     return get_compass_for_direction( dir, width );
 }
 
-std::string display::colorized_compass_legend_text_color( int width )
+std::string display::colorized_compass_legend_text_color( int width, int height )
 {
-    int wavail = width;
     const monster_visible_info &mon_visible = get_avatar().get_mon_visible();
     //~ Creature name format in compass legend. 1$ = symbol, 2$ = name. ex: "Z shocker zombie"
     const std::string name_fmt = _( "%1$s %2$s" );
     std::vector<std::string> names;
     for( const std::vector<npc *> &nv : mon_visible.unique_types ) {
         for( const npc *n : nv ) {
-            if( wavail < 0 ) {
-                break;
-            }
             std::string name;
             switch( n->get_attitude() ) {
                 case NPCATT_KILL:
@@ -2235,7 +2231,6 @@ std::string display::colorized_compass_legend_text_color( int width )
                     break;
             }
             name = string_format( name_fmt, name, n->name );
-            wavail -= utf8_width( name, true );
             names.emplace_back( name );
         }
     }
@@ -2246,16 +2241,35 @@ std::string display::colorized_compass_legend_text_color( int width )
         }
     }
     for( const auto &m : mlist ) {
-        if( wavail < 0 ) {
-            break;
-        }
         std::string name = m.second > 1 ? string_format( "%d ", m.second ) : "";
         name += string_format( name_fmt, colorize( m.first->sym, m.first->color ),
                                m.first->nname( m.second ) );
-        wavail -= utf8_width( name, true );
         names.emplace_back( name );
     }
-    return enumerate_as_string( names, enumeration_conjunction::none );
+    // Split names into X lines, where X = height.
+    // Lines use the provided width.
+    // This effectively limits the text to a 'width'x'height' box.
+    std::string ret;
+    const int nsize = names.size();
+    for( int row = 0, nidx = 0; row < height && nidx < nsize; row++ ) {
+        int wavail = width;
+        int nwidth = utf8_width( names[nidx], true );
+        while( nidx < nsize && wavail > nwidth ) {
+            wavail -= nwidth;
+            ret += names[nidx];
+            nidx++;
+            if( nidx < nsize ) {
+                nwidth = utf8_width( names[nidx], true );
+                if( wavail > nwidth ) {
+                    ret += " ";
+                }
+            }
+        }
+        if( row < height - 1 ) {
+            ret += "\n";
+        }
+    }
+    return ret;
 }
 
 static void draw_health_classic( const draw_args &args )

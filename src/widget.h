@@ -114,7 +114,6 @@ class widget
 {
     private:
         friend class generic_factory<widget>;
-        friend void custom_draw_fn( avatar &u, const catacurses::window &w, const widget &wgt );
 
         widget_id id;
         bool was_loaded = false;
@@ -171,11 +170,11 @@ class widget
         // label area, so the returned string is equal to max_width.
         std::string layout( const avatar &ava, unsigned int max_width = 0 );
         // Display labeled widget, with value (number, graph, or string) from an avatar
-        std::string show( const avatar &ava );
+        std::string show( const avatar &ava, unsigned int max_width );
         // Return a window_panel for rendering this widget at given width (and possibly height)
         window_panel get_window_panel( const int width, const int req_height = 1 );
         // Return a colorized string for a _var associated with a description function
-        std::string color_text_function_string( const avatar &ava );
+        std::string color_text_function_string( const avatar &ava, unsigned int max_width );
         // Return true if the current _var is one which uses a description function
         bool uses_text_function();
 

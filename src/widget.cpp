@@ -359,14 +359,14 @@ int widget::get_var_value( const avatar &ava )
     return value;
 }
 
-std::string widget::show( const avatar &ava )
+std::string widget::show( const avatar &ava, const unsigned int max_width )
 {
     if( uses_text_function() ) {
         // Text functions are a carry-over from before widgets, with existing functions generating
         // descriptive colorized text for avatar attributes.  The "value" for these is immaterial;
         // only the final color string is shown.  Bypass value calculation and call the
         // text-rendering function directly.
-        return color_text_function_string( ava );
+        return color_text_function_string( ava, max_width );
     } else {
         // For normal widgets, get current numeric value and potential maximum,
         // and return a color string rendering of that value in the appropriate style.
@@ -374,6 +374,23 @@ std::string widget::show( const avatar &ava )
         int value_max = get_var_max( ava );
         return color_value_string( value, value_max );
     }
+}
+
+// Returns the new row index after drawing
+static int custom_draw_multiline( const std::string &widget_string, const catacurses::window &w, const int margin, const int width, int row_num )
+{
+    std::string wgt_str = widget_string;
+    size_t strpos = 0;
+    // Split the widget string into lines (for height > 1)
+    while( ( strpos = wgt_str.find( '\n' ) ) != std::string::npos ) {
+        trim_and_print( w, point( margin, row_num ), width, c_light_gray, wgt_str.substr( 0, strpos ) );
+        wgt_str.erase( 0, strpos + 1 );
+        row_num++;
+    }
+    // Last line (or first line for single-line widgets)
+    trim_and_print( w, point( margin, row_num ), width, c_light_gray, wgt_str );
+    row_num++;
+    return row_num;
 }
 
 // Drawing function, provided as a callback to the window_panel constructor.
@@ -405,29 +422,18 @@ static void custom_draw_func( const draw_args &args )
             int row_num = 0;
             for( const widget_id &row_wid : wgt->_widgets ) {
                 widget row_widget = row_wid.obj();
-                trim_and_print( w, point( margin, row_num ), widt, c_light_gray, row_widget.layout( u,
-                                widt ) );
-                row_num++;
+                const std::string txt = row_widget.layout( u, widt );
+                row_num = custom_draw_multiline( txt, w, margin, widt, row_num );
             }
         } else {
             // Layout widgets in columns
             // For now, this is the default when calling layout()
             // So, just layout self on a single line
-            trim_and_print( w, point( margin, 0 ), widt, c_light_gray, wgt->layout( u, widt ) );
+            custom_draw_multiline( wgt->layout( u, widt ), w, margin, widt, 0 );
         }
     } else {
         // No layout, just a widget
-        std::string wgt_str = wgt->layout( u, widt );
-        size_t strpos = 0;
-        int row_num = 0;
-        // Split the widget string into lines (for height > 1)
-        while( ( strpos = wgt_str.find( '\n' ) ) != std::string::npos ) {
-            trim_and_print( w, point( margin, row_num ), widt, c_light_gray, wgt_str.substr( 0, strpos ) );
-            wgt_str.erase( 0, strpos + 1 );
-            row_num++;
-        }
-        // Last line (or first line for single-line widgets)
-        trim_and_print( w, point( margin, row_num ), widt, c_light_gray, wgt_str );
+        custom_draw_multiline( wgt->layout( u, widt ), w, margin, widt, 0 );
     }
     wnoutrefresh( w );
 }
@@ -442,10 +448,10 @@ window_panel widget::get_window_panel( const int width, const int req_height )
     if( _style == "layout" && _arrange == "rows" ) {
         height = 0;
         for( const widget_id &wid : _widgets ) {
-            height += wid->_height;
+            height += wid->_height > 0 ? wid->_height : 1;
         }
     } else if( _style == "widget" ) {
-        height = _height;
+        height = _height > 1 ? _height : req_height;
     }
     // Minimap and log do not have a predetermined height
     // (or they should allow caller to customize height)
@@ -490,7 +496,7 @@ bool widget::uses_text_function()
     }
 }
 
-std::string widget::color_text_function_string( const avatar &ava )
+std::string widget::color_text_function_string( const avatar &ava, unsigned int max_width )
 {
     std::string ret;
     bool apply_color = true;
@@ -575,7 +581,7 @@ std::string widget::color_text_function_string( const avatar &ava )
             apply_color = false; // Already colorized
             break;
         case widget_var::compass_legend_text:
-            desc.first = display::colorized_compass_legend_text_color( _width );
+            desc.first = display::colorized_compass_legend_text_color( max_width, _height );
             apply_color = false; // Already colorized
             break;
         default:
@@ -749,7 +755,7 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
         }
     } else {
         // For widgets, process each row to append to 'ret'
-        auto append_line = []( const std::string &line, bool first_row, unsigned int max_width, const translation &label ) {
+        auto append_line = []( const std::string &line, bool first_row, unsigned int max_width, const translation &label, bool skip_padding ) {
             std::string ret;
             // Width used by label, ": " and value, using utf8_width to ignore color tags
             unsigned int used_width = utf8_width( line, true );
@@ -764,7 +770,7 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
             }
 
             // then enough padding to fit max_width
-            if( used_width < max_width ) {
+            if( !skip_padding && used_width < max_width ) {
                 ret += std::string( max_width - used_width, ' ' );
             }
             // then colorized value
@@ -773,20 +779,20 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
         };
 
         // Get displayed value (colorized)
-        std::string shown = show( ava );
+        std::string shown = show( ava, max_width );
         size_t strpos = 0;
         int row_num = 0;
         // For multi-line widgets, each line is separated by a '\n' character
         while( ( strpos = shown.find( '\n' ) ) != std::string::npos && row_num < _height ) {
             // Process line, including '\n'
-            ret += append_line( shown.substr( 0, strpos + 1 ), row_num == 0, max_width, _label );
+            ret += append_line( shown.substr( 0, strpos + 1 ), row_num == 0, max_width, _label, _height > 1 );
             // Delete used token
             shown.erase( 0, strpos + 1 );
             row_num++;
         }
         if( row_num < _height ) {
             // Process last line, or first for single-line widgets
-            ret += append_line( shown, row_num == 0, max_width, _label );
+            ret += append_line( shown, row_num == 0, max_width, _label, _height > 1 );
         }
     }
     return ret;

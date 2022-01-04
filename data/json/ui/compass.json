@@ -85,7 +85,7 @@
     "type": "widget",
     "style": "text",
     "var": "compass_legend_text",
-    "width": 100
+    "height": 3
   },
   {
     "id": "compass_top_layout",
