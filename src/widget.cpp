@@ -160,6 +160,7 @@ void widget::load( const JsonObject &jo, const std::string & )
 {
     optional( jo, was_loaded, "strings", _strings );
     optional( jo, was_loaded, "width", _width, 1 );
+    optional( jo, was_loaded, "height", _height, 1 );
     optional( jo, was_loaded, "symbols", _symbols, "-" );
     optional( jo, was_loaded, "fill", _fill, "bucket" );
     optional( jo, was_loaded, "label", _label, translation() );
@@ -378,11 +379,21 @@ static void custom_draw_func( const draw_args &args )
             // Layout widgets in columns
             // For now, this is the default when calling layout()
             // So, just layout self on a single line
-            trim_and_print( w, point( margin, 0 ), widt, c_light_gray, _( wgt->layout( u, widt ) ) );
+            trim_and_print( w, point( margin, 0 ), widt, c_light_gray, wgt->layout( u, widt ) );
         }
     } else {
-        // No layout, just a widget - simply layout self on a single line
-        trim_and_print( w, point( margin, 0 ), widt, c_light_gray, _( wgt->layout( u, widt ) ) );
+        // No layout, just a widget
+        std::string wgt_str = wgt->layout( u, widt );
+        size_t strpos = 0;
+        int row_num = 0;
+        // Split the widget string into lines (for height > 1)
+        while( ( strpos = wgt_str.find( '\n' ) ) != std::string::npos ) {
+            trim_and_print( w, point( margin, row_num ), widt, c_light_gray, wgt_str.substr( 0, strpos ) );
+            wgt_str.erase( 0, strpos + 1 );
+            row_num++;
+        }
+        // Last line (or first line for single-line widgets)
+        trim_and_print( w, point( margin, row_num ), widt, c_light_gray, wgt_str );
     }
     wnoutrefresh( w );
 }
@@ -392,10 +403,15 @@ window_panel widget::get_window_panel( const int width, const int req_height )
     // Width is fixed, but height may vary depending on child widgets
     int height = req_height;
 
-    // For layout with rows, height will be number of rows
-    // (assuming each row is only 1 line)
+    // For layout with rows, height will be the combined
+    // height of all child widgets.
     if( _style == "layout" && _arrange == "rows" ) {
-        height = _widgets.size();
+        height = 0;
+        for( const widget_id &wid : _widgets ) {
+            height += wid->_height;
+        }
+    } else if( _style == "widget" ) {
+        height = _height;
     }
     // Minimap and log do not have a predetermined height
     // (or they should allow caller to customize height)
@@ -687,20 +703,46 @@ std::string widget::layout( const avatar &ava, const unsigned int max_width )
             }
         }
     } else {
+        // For widgets, process each row to append to 'ret'
+        auto append_line = []( const std::string &line, bool first_row, unsigned int max_width, const translation &label ) {
+            std::string ret;
+            // Width used by label, ": " and value, using utf8_width to ignore color tags
+            unsigned int used_width = utf8_width( line, true );
+            if( first_row ) {
+                const std::string tlabel = label.translated();
+                // If label is empty or omitted, don't reserve space for it
+                if( !tlabel.empty() ) {
+                    used_width += utf8_width( tlabel, true ) + 2;
+                    // Label and ": " first
+                    ret += tlabel + ": ";
+                }
+            }
+
+            // then enough padding to fit max_width
+            if( used_width < max_width ) {
+                ret += std::string( max_width - used_width, ' ' );
+            }
+            // then colorized value
+            ret += line;
+            return ret;
+        };
+
         // Get displayed value (colorized)
         std::string shown = show( ava );
-        const std::string tlabel = _label.translated();
-        // Width used by label, ": " and value, using utf8_width to ignore color tags
-        unsigned int used_width = utf8_width( tlabel, true ) + 2 + utf8_width( shown, true );
-
-        // Label and ": " first
-        ret += tlabel + ": ";
-        // then enough padding to fit max_width
-        if( used_width < max_width ) {
-            ret += std::string( max_width - used_width, ' ' );
+        size_t strpos = 0;
+        int row_num = 0;
+        // For multi-line widgets, each line is separated by a '\n' character
+        while( ( strpos = shown.find( '\n' ) ) != std::string::npos && row_num < _height ) {
+            // Process line, including '\n'
+            ret += append_line( shown.substr( 0, strpos + 1 ), row_num == 0, max_width, _label );
+            // Delete used token
+            shown.erase( 0, strpos + 1 );
+            row_num++;
         }
-        // then colorized value
-        ret += shown;
+        if( row_num < _height ) {
+            // Process last line, or first for single-line widgets
+            ret += append_line( shown, row_num == 0, max_width, _label );
+        }
     }
     return ret;
 }

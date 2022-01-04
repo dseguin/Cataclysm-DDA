@@ -115,6 +115,8 @@ class widget
         bodypart_id _bp_id;
         // Width in characters of widget, not including label
         int _width = 0;
+        // Height in characters of widget, only matters for style == widget
+        int _height = 0;
         // String of symbols for graph widgets, mapped in increasing order like "0123..."
         std::string _symbols;
         // Graph fill style ("bucket" or "pool")
