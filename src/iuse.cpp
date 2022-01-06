@@ -2041,10 +2041,10 @@ cata::optional<int> iuse::extinguisher( Character *p, item *it, bool, const trip
 class exosuit_interact
 {
     public:
-        static player_activity run( item *it ) {
+        static int run( item *it ) {
             exosuit_interact menu( it );
             menu.interact_loop();
-            return menu.act;
+            return menu.moves;
         }
 
     private:
@@ -2066,16 +2066,17 @@ class exosuit_interact
             }
             width_menu = std::min( width_menu, 50 );
             width_info = 80 - width_menu;
+            moves = 0;
         }
         ~exosuit_interact() = default;
 
-        item *suit = nullptr;
+        item *suit;
         weak_ptr_fast<ui_adaptor> ui;
-        player_activity act;
         input_context ctxt;
         catacurses::window w_border;
         catacurses::window w_info;
         catacurses::window w_menu;
+        int moves = 0;
         int pocket_count = 0;
         int cur_pocket = 0;
         int scroll_pos = 0;
@@ -2165,7 +2166,9 @@ class exosuit_interact
                     done = true;
                 } else if( action == "CONFIRM" ) {
                     scroll_pos = 0;
-                    insert_replace_mod( suit->get_contents().get_all_contained_pockets().value()[cur_pocket], suit );
+                    int nmoves = insert_replace_mod(
+                                     suit->get_contents().get_all_contained_pockets().value()[cur_pocket], suit );
+                    moves = moves > nmoves ? moves : nmoves;
                 } else if( action == "UP" ) {
                     cur_pocket--;
                     if( cur_pocket < 0 ) {
@@ -2183,23 +2186,19 @@ class exosuit_interact
                 } else if( action == "SCROLL_INFOBOX_DOWN" ) {
                     scroll_pos++;
                 } else if( action == "ANY_INPUT" ) {
-                    // TODO
-                }
-                // Player activity queued up, close interaction menu
-                if( !act.is_null() || !get_player_character().activity.is_null() ) {
-                    done = true;
+                    // TODO? Probably unnecessary.
                 }
             }
         }
 
-        bool insert_replace_mod( item_pocket *pkt, item *it ) {
+        int insert_replace_mod( item_pocket *pkt, item *it ) {
             Character &c = get_player_character();
             map &here = get_map();
             const std::set<flag_id> flags = pkt->get_pocket_data()->get_flag_restrictions();
             if( flags.empty() ) {
                 //~ Modular exoskeletons require pocket restrictions to insert modules. %s = pocket name.
                 popup( _( "%s doesn't define any restrictions for modules!" ), get_pocket_name( pkt ) );
-                return false;
+                return 0;
             }
 
             // If pocket already contains a module, ask to unload or replace
@@ -2213,14 +2212,14 @@ class exosuit_interact
                 } );
                 int ret = amenu.ret;
                 if( ret < 0 || ret > 1 ) {
-                    return false;
+                    return 0;
                 } else if( ret == 0 ) {
                     // Unload existing module
                     pkt->remove_items_if( [&c, &here]( const item & i ) {
                         here.add_item_or_charges( c.pos(), i );
                         return true;
                     } );
-                    return false;
+                    return to_moves<int>( 5_seconds );
                 }
             }
 
@@ -2242,7 +2241,7 @@ class exosuit_interact
             if( candidates.empty() ) {
                 //~ The player has nothing that fits in the modular exoskeleton's pocket
                 popup( _( "You don't have anything compatible with this module!" ) );
-                return false;
+                return 0;
             }
 
             //~ Prompt the player to select an item to attach to the modular exoskeleton's pocket (%s)
@@ -2254,8 +2253,10 @@ class exosuit_interact
             int ret = imenu.ret;
             if( ret < 0 || static_cast<size_t>( ret ) >= candidates.size() ) {
                 // Cancelled
-                return false;
+                return 0;
             }
+
+            int moves = 0;
 
             // Unload existing module
             if( not_empty ) {
@@ -2263,15 +2264,17 @@ class exosuit_interact
                     here.add_item_or_charges( c.pos(), i );
                     return true;
                 } );
+                moves += to_moves<int>( 5_seconds );
             }
 
             if( pkt->insert_item( *candidates[ret] ).success() ) {
                 candidates[ret].remove_item();
-                return true;
+                moves += to_moves<int>( 5_seconds );
+                return moves;
             }
             debugmsg( "Could not insert item \"%s\" into pocket \"%s\"", candidates[ret]->type_name(),
                       get_pocket_name( pkt ) );
-            return false;
+            return moves;
         }
 };
 
@@ -2284,8 +2287,8 @@ cata::optional<int> iuse::manage_exosuit( Character *p, item *it, bool, const tr
         add_msg( m_warning, _( "Your %s does not have any pockets." ), it->tname() );
         return cata::nullopt;
     }
-    exosuit_interact::run( it );
-    return cata::nullopt;
+    p->moves -= exosuit_interact::run( it );
+    return 0;
 }
 
 cata::optional<int> iuse::rm13armor_off( Character *p, item *it, bool, const tripoint & )
