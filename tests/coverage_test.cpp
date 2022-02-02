@@ -70,8 +70,10 @@ static float get_avg_melee_dmg( std::string clothing_id, bool infect_risk = fals
 static float get_avg_bullet_dmg( std::string clothing_id )
 {
     clear_map();
-    standard_npc badguy( "TestBaddie", badguy_pos, {}, 0, 8, 8, 8, 8 );
     standard_npc dude( "TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8 );
+    Character &badguy = get_player_character();
+    badguy.setpos( badguy_pos );
+    badguy.empty_skills();
     item cloth( clothing_id );
     projectile proj;
     proj.speed = 1000;
@@ -84,6 +86,7 @@ static float get_avg_bullet_dmg( std::string clothing_id )
     int num_hits = 0;
     for( int i = 0; i < num_iters; i++ ) {
         clear_character( dude, true );
+        dude.setpos( dude_pos );
         dude.wear_item( cloth, false );
         dude.add_effect( effect_sleep, 1_hours );
         dealt_projectile_attack atk = projectile_attack( proj, badguy_pos, dude_pos, dispersion_sources(),
