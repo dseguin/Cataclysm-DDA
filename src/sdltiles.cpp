@@ -70,6 +70,7 @@
 #include "sdl_font.h"
 #include "sdl_gamepad.h"
 #include "sdlsound.h"
+#include "sound_csound.h"
 #include "string_formatter.h"
 #include "ui_manager.h"
 #include "wcwidth.h"
@@ -404,6 +405,7 @@ static void WinCreate()
 
     // Set up audio mixer.
     init_sound();
+    cata_csound::init_sound();
 
     DebugLog( D_INFO, DC_ALL ) << "USE_COLOR_MODULATED_TEXTURES is set to " <<
                                get_option<bool>( "USE_COLOR_MODULATED_TEXTURES" );
@@ -421,6 +423,7 @@ static void WinDestroy()
     touch_joystick.reset();
 #endif
 
+    cata_csound::shutdown_sound();
     shutdown_sound();
     tilecontext.reset();
     gamepad::quit();
@@ -3617,7 +3620,8 @@ void catacurses::init_interface()
     init_colors();
 
     // initialize sound set
-    load_soundset();
+    ::load_soundset();
+    cata_csound::load_soundset();
 
     font = std::make_unique<FontFallbackList>( renderer, format, fl.fontwidth, fl.fontheight,
             windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );

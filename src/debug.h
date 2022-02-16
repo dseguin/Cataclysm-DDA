@@ -171,6 +171,8 @@ enum DebugClass {
     D_SDL     = 1 << 6,
     /** Related to tile memory (map_memory.cpp) */
     D_MMAP    = 1 << 7,
+    /** CSound audio library */
+    D_CSOUND  = 1 << 8,
 
     DC_ALL    = ( 1 << 30 ) - 1
 };

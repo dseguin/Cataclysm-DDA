@@ -134,6 +134,7 @@ enum class group : int {
 };
 
 void load_sound_effects( const JsonObject &jsobj );
+void load_csound_effects( const JsonObject &jsobj );
 void load_sound_effect_preload( const JsonObject &jsobj );
 void load_playlist( const JsonObject &jsobj );
 void play_variant_sound( const std::string &id, const std::string &variant, int volume,
@@ -179,6 +180,8 @@ void do_player_death_hurt( const Character &target, bool death );
 void do_fatigue();
 // @param obst should be string id of obstacle terrain or vehicle part
 void do_obstacle( const std::string &obst = "" );
+void toggle_sound_engine();
+bool sound_engine_csound();
 } // namespace sfx
 
 #endif // CATA_SRC_SOUNDS_H

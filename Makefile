@@ -635,24 +635,24 @@ ifeq ($(SOUND), 1)
 		 -framework SDL2_mixer -framework Vorbis -framework Ogg
     else # libsdl build
       ifeq ($(MACPORTS), 1)
-        LDFLAGS += -lSDL2_mixer -lvorbisfile -lvorbis -logg
+        LDFLAGS += -lSDL2_mixer -lvorbisfile -lvorbis -logg -lcsound64
       else # homebrew
         CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer)
         LDFLAGS += $(shell $(PKG_CONFIG) --libs SDL2_mixer)
-        LDFLAGS += -lvorbisfile -lvorbis -logg
+        LDFLAGS += -lvorbisfile -lvorbis -logg -lcsound64
       endif
     endif
   else # not osx
-    CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer)
+    CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer) -I/usr/include/csound
     LDFLAGS += $(shell $(PKG_CONFIG) --libs SDL2_mixer)
-    LDFLAGS += -lpthread
+    LDFLAGS += -lpthread -lcsound64
   endif
 
   ifeq ($(MSYS2),1)
-    LDFLAGS += -lmpg123 -lshlwapi -lvorbisfile -lvorbis -logg -lflac
+    LDFLAGS += -lmpg123 -lshlwapi -lvorbisfile -lvorbis -logg -lflac -lcsound64
   endif
 
-  CXXFLAGS += -DSDL_SOUND
+  CXXFLAGS += -DSDL_SOUND -DCATA_CSOUND
 endif
 
 ifeq ($(SDL), 1)
@@ -685,7 +685,7 @@ ifeq ($(TILES), 1)
       LDFLAGS += -framework Cocoa $(shell sdl2-config --libs) -lSDL2_ttf
       LDFLAGS += -lSDL2_image
       ifdef SOUND
-        LDFLAGS += -lSDL2_mixer
+        LDFLAGS += -lSDL2_mixer -lcsound64
       endif
     endif
   else # not osx
@@ -1025,6 +1025,7 @@ ifeq ($(TILES), 1)
 endif
 ifeq ($(SOUND), 1)
 	cp -R --no-preserve=ownership data/sound $(DATA_PREFIX)
+	cp -R --no-preserve=ownership data/csound $(DATA_PREFIX)
 endif
 	install --mode=644 data/changelog.txt data/cataicon.ico data/fontdata.json \
                    LICENSE.txt LICENSE-OFL-Terminus-Font.txt -t $(DATA_PREFIX)
@@ -1061,6 +1062,7 @@ ifeq ($(TILES), 1)
 endif
 ifeq ($(SOUND), 1)
 	cp -R --no-preserve=ownership data/sound $(DATA_PREFIX)
+	cp -R --no-preserve=ownership data/csound $(DATA_PREFIX)
 endif
 	install --mode=644 data/changelog.txt data/cataicon.ico data/fontdata.json \
                    LICENSE.txt LICENSE-OFL-Terminus-Font.txt -t $(DATA_PREFIX)
@@ -1121,6 +1123,7 @@ endif
 ifeq ($(TILES), 1)
 ifeq ($(SOUND), 1)
 	cp -R data/sound $(APPDATADIR)
+	cp -R data/csound $(APPDATADIR)
 endif  # ifdef SOUND
 	cp -R gfx $(APPRESOURCESDIR)/
 ifdef FRAMEWORK

@@ -428,6 +428,7 @@ void DynamicDataLoader::initialize()
 
     add( "MONSTER_FACTION", &monfactions::load_monster_faction );
 
+    add( "csound_effect", &sfx::load_csound_effects );
     add( "sound_effect", &sfx::load_sound_effects );
     add( "sound_effect_preload", &sfx::load_sound_effect_preload );
     add( "playlist", &sfx::load_playlist );

@@ -742,6 +742,9 @@ static std::ostream &operator<<( std::ostream &out, DebugClass cl )
         if( cl & D_MMAP ) {
             out << "MMAP ";
         }
+        if( cl & D_CSOUND ) {
+            out << "CSOUND ";
+        }
     }
     return out;
 }

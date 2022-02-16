@@ -28,12 +28,15 @@
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
+#include "options.h"
 #include "output.h"
 #include "overmapbuffer.h"
 #include "player_activity.h"
 #include "point.h"
 #include "rng.h"
 #include "safemode_ui.h"
+#include "sdlsound.h"
+#include "sound_csound.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
@@ -235,6 +238,8 @@ static std::vector<std::pair<tripoint, monster_sound_event>> recent_sounds;
 static std::vector<std::pair<tripoint, sound_event>> sounds_since_last_turn;
 // The sound events currently displayed to the player.
 static std::unordered_map<tripoint, sound_event> sound_markers;
+// Cache the selected sound engine (ASound or CSound)
+static bool using_csound = false;
 
 // This is an attempt to handle attenuation of sound for underground areas.
 // The main issue it adresses is that you can hear activity
@@ -329,6 +334,45 @@ void sounds::sound( const tripoint &p, int vol, sound_t category, const translat
                     bool ambient, const std::string &id, const std::string &variant )
 {
     sounds::sound( p, vol, category, description.translated(), ambient, id, variant );
+}
+
+static void load_sound_effect( const JsonObject &jsobj, bool csound )
+{
+    std::array<std::string, 3> sound = {
+        jsobj.get_string( "id" ),
+        jsobj.get_string( "variant", "default" ),
+        jsobj.get_string( "season", "" )
+    };
+    const int volume = jsobj.get_int( "volume", 100 );
+
+    std::vector<std::string> files;
+    assign( jsobj, "files", files );
+
+    if( csound ) {
+        cata_csound::load_sfx( sound, volume, files );
+    } else {
+        ::load_sfx( sound, volume, files );
+    }
+}
+
+void sfx::load_sound_effects( const JsonObject &jsobj )
+{
+    load_sound_effect( jsobj, false );
+}
+
+void sfx::load_csound_effects( const JsonObject &jsobj )
+{
+    load_sound_effect( jsobj, true );
+}
+
+void sfx::toggle_sound_engine()
+{
+    using_csound = !using_csound;
+}
+
+bool sfx::sound_engine_csound()
+{
+    return using_csound;
 }
 
 void sounds::add_footstep( const tripoint &p, int volume, int, monster *,
@@ -1802,6 +1846,49 @@ bool sfx::has_variant_sound( const std::string &id, const std::string &variant )
     const season_type seas = season_of_year( calendar::turn );
     const std::string seas_str = season_str( seas );
     return has_variant_sound( id, variant, seas_str );
+}
+
+bool sfx::has_variant_sound( const std::string &id, const std::string &variant,
+                             const std::string &season )
+{
+    if( sound_engine_csound() ) {
+        return cata_csound::has_variant_sfx( id, variant, season );
+    } else {
+        return ::has_variant_sfx( id, variant, season );
+    }
+}
+
+void sfx::play_variant_sound( const std::string &id, const std::string &variant,
+                              const std::string &season, int volume )
+{
+    if( sound_engine_csound() ) {
+        cata_csound::play_variant_sfx( id, variant, season, volume );
+    } else {
+        ::play_variant_sfx( id, variant, season, volume );
+    }
+}
+
+void sfx::play_variant_sound( const std::string &id, const std::string &variant,
+                              const std::string &season, int volume,
+                              units::angle angle, double pitch_min, double pitch_max )
+{
+    if( sound_engine_csound() ) {
+        cata_csound::play_variant_sfx( id, variant, season, volume, angle, pitch_min, pitch_max );
+    } else {
+        ::play_variant_sfx( id, variant, season, volume, angle, pitch_min, pitch_max );
+    }
+}
+
+void sfx::play_ambient_variant_sound( const std::string &id, const std::string &variant,
+                                      const std::string &season, int volume,
+                                      channel channel, int fade_in_duration, double pitch, int loops )
+{
+    if( sound_engine_csound() ) {
+        cata_csound::play_ambient_variant_sfx( id, variant, season, volume, channel, fade_in_duration,
+                                               pitch, loops );
+    } else {
+        ::play_ambient_variant_sfx( id, variant, season, volume, channel, fade_in_duration, pitch, loops );
+    }
 }
 
 #else // if defined(SDL_SOUND)

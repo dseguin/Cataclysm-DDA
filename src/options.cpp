@@ -51,8 +51,12 @@
 #include <sstream>
 #include <string>
 
-std::map<std::string, std::string> TILESETS; // All found tilesets: <name, tileset_dir>
-std::map<std::string, std::string> SOUNDPACKS; // All found soundpacks: <name, soundpack_dir>
+// All found tilesets: <name, tileset_dir>
+std::map<std::string, std::string> TILESETS;
+// All found soundpacks (ASound): <name, soundpack_dir>
+std::map<std::string, std::string> SOUNDPACKS;
+// All found soundpacks (CSound): <name, soundpack_dir>
+std::map<std::string, std::string> CSOUNDPACKS;
 
 // Map from old option name to pair of <new option name and map of old option value to new option value>
 // Options and values not listed here will not be changed.
@@ -1008,12 +1012,17 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     return result;
 }
 
-std::vector<options_manager::id_and_option> options_manager::build_soundpacks_list()
+std::vector<options_manager::id_and_option> options_manager::build_soundpacks_list( bool csound )
 {
     std::vector<id_and_option> result;
 
-    search_resource( SOUNDPACKS, result, { PATH_INFO::user_sound(), PATH_INFO::data_sound() },
-                     "soundpack", PATH_INFO::soundpack_conf() );
+    if( csound ) {
+        search_resource( CSOUNDPACKS, result, { PATH_INFO::user_csound(), PATH_INFO::data_csound() },
+                         "soundpack", PATH_INFO::soundpack_conf() );
+    } else {
+        search_resource( SOUNDPACKS, result, { PATH_INFO::user_sound(), PATH_INFO::data_sound() },
+                         "soundpack", PATH_INFO::soundpack_conf() );
+    }
 
     // Select default built-in sound pack
     if( result.empty() ) {
@@ -1359,12 +1368,26 @@ void options_manager::add_options_general()
          true, COPT_NO_SOUND_HIDE
        );
 
-    add( "SOUNDPACKS", "general", to_translation( "Choose soundpack" ),
+    add( "SOUND_ENGINE", "general", to_translation( "Sound Engine" ),
+         to_translation( "Choose which sound engine to generate sound effects. ASound traditionally loads sounds from audio files, while CSound synthesizes sounds from special source files." ),
+    { { "asound", to_translation( "ASound" ) }, { "csound", to_translation( "CSound" ) } },
+    "asound", COPT_NO_SOUND_HIDE );
+
+    get_option( "SOUND_ENGINE" ).setPrerequisite( "SOUND_ENABLED" );
+
+    add( "SOUNDPACKS", "general", to_translation( "Choose soundpack (ASound)" ),
          to_translation( "Choose the soundpack you want to use.  Requires restart." ),
          build_soundpacks_list(), "basic", COPT_NO_SOUND_HIDE
        ); // populate the options dynamically
 
-    get_option( "SOUNDPACKS" ).setPrerequisite( "SOUND_ENABLED" );
+    get_option( "SOUNDPACKS" ).setPrerequisites( "SOUND_ENGINE", { "asound" } );
+
+    add( "CSOUNDPACKS", "general", to_translation( "Choose soundpack (CSound)" ),
+         to_translation( "Choose the soundpack you want to use.  Requires restart." ),
+         build_soundpacks_list( true ), "basic", COPT_NO_SOUND_HIDE
+       ); // populate the options dynamically
+
+    get_option( "CSOUNDPACKS" ).setPrerequisites( "SOUND_ENGINE", { "csound" } );
 
     add( "MUSIC_VOLUME", "general", to_translation( "Music volume" ),
          to_translation( "Adjust the volume of the music being played in the background." ),
@@ -3127,6 +3150,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     calendar::set_eternal_night( ::get_option<std::string>( "ETERNAL_TIME_OF_DAY" ) == "night" );
     calendar::set_eternal_day( ::get_option<std::string>( "ETERNAL_TIME_OF_DAY" ) == "day" );
 
+    if( ( ::get_option<std::string>( "SOUND_ENGINE" ) == "csound" ) != sfx::sound_engine_csound() ) {
+        sfx::toggle_sound_engine();
+    }
+
 #if !defined(__ANDROID__) && (defined(TILES) || defined(_WIN32))
     if( terminal_size_changed ) {
         int scaling_factor = get_scaling_factor();
@@ -3250,6 +3277,9 @@ void options_manager::load()
 
 #if defined(SDL_SOUND)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
+    if( ( ::get_option<std::string>( "SOUND_ENGINE" ) == "csound" ) != sfx::sound_engine_csound() ) {
+        sfx::toggle_sound_engine();
+    }
 #endif
 }
 

@@ -39,7 +39,7 @@ class options_manager
             const std::vector<std::string> &search_paths, const std::string &resource_name,
             const std::string &resource_filename );
         static std::vector<id_and_option> build_tilesets_list();
-        static std::vector<id_and_option> build_soundpacks_list();
+        static std::vector<id_and_option> build_soundpacks_list( bool csound = false );
         static std::unordered_set<std::string> get_langs_with_translation_files();
 
         void enable_json( const std::string &var );
@@ -308,11 +308,16 @@ bool use_narrow_sidebar(); // short-circuits to on if terminal is too small
  * Second string is directory that contain tileset.
  */
 extern std::map<std::string, std::string> TILESETS;
-/** A mapping(string:string) that stores all soundpack values.
+/** A mapping(string:string) that stores all (ASound) soundpack values.
  * Firsts string is soundpack NAME from config.
  * Second string is directory that contains soundpack.
  */
 extern std::map<std::string, std::string> SOUNDPACKS;
+/** A mapping(string:string) that stores all (CSound) soundpack values.
+ * Firsts string is soundpack NAME from config.
+ * Second string is directory that contains soundpack.
+ */
+extern std::map<std::string, std::string> CSOUNDPACKS;
 
 options_manager &get_options();
 

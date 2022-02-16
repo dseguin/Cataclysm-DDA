@@ -186,6 +186,10 @@ std::string PATH_INFO::defaultsounddir()
 {
     return datadir_value + "sound";
 }
+std::string PATH_INFO::defaultcsounddir()
+{
+    return datadir_value + "csound";
+}
 std::string PATH_INFO::defaulttilejson()
 {
     return "tile_config.json";
@@ -294,6 +298,10 @@ std::string PATH_INFO::user_sound()
 {
     return user_dir_value + "sound/";
 }
+std::string PATH_INFO::user_csound()
+{
+    return user_dir_value + "csound/";
+}
 std::string PATH_INFO::worldoptions()
 {
     return "worldoptions.json";
@@ -337,6 +345,10 @@ std::string PATH_INFO::lang_file()
 std::string PATH_INFO::data_sound()
 {
     return datadir_value + "sound";
+}
+std::string PATH_INFO::data_csound()
+{
+    return datadir_value + "csound";
 }
 
 std::string PATH_INFO::credits()

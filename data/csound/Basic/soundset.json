@@ -1,0 +1,12 @@
+[
+  {
+    "type": "csound_effect",
+    "id": "menu_move",
+    "files": [ "menu_move.csd" ]
+  },
+  {
+    "type": "csound_effect",
+    "id": "menu_error",
+    "files": [ "menu_error.csd" ]
+  }
+]
