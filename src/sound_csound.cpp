@@ -36,21 +36,75 @@ struct csound_sval {
 
 static std::string current_soundpack_path;
 static std::map<csound_skey, std::vector<csound_sval>> effects;
+// Thread sharing
+static std::unique_ptr<std::vector<csound_sval *>> queued_effects =
+            std::make_unique<std::vector<csound_sval *>>();
+static int *csound_exit = nullptr;
+static void *csound_thread = nullptr;
+static void *queue_lock = nullptr;
+static void *exit_lock = nullptr;
+
+static uintptr_t async_callback( void * /*data*/ )
+{
+    bool quit = false;
+    while( !quit ) {
+        csound_sval *d = nullptr;
+        csoundLockMutex( queue_lock );
+        if( !queued_effects->empty() ) {
+            d = queued_effects->back();
+        }
+        csoundUnlockMutex( queue_lock );
+        if( !!d && !d->lock ) {
+            csoundStart( d->sfx );
+            while( !quit && !csoundPerformKsmps( d->sfx ) ) {
+                csoundLockMutex( exit_lock );
+                quit = !!*csound_exit;
+                csoundUnlockMutex( exit_lock );
+            }
+            csoundSetScoreOffsetSeconds( d->sfx, 0 );
+            csoundRewindScore( d->sfx );
+            csoundLockMutex( queue_lock );
+            for( auto iter = queued_effects->end() - 1; !queued_effects->empty() && *iter == d; iter-- ) {
+                queued_effects->pop_back();
+            }
+            csoundUnlockMutex( queue_lock );
+        }
+        csoundLockMutex( exit_lock );
+        quit = !!*csound_exit;
+        csoundUnlockMutex( exit_lock );
+    }
+    return 0;
+}
 
 bool cata_csound::init_sound()
 {
-    // Unnecessary?
+    csound_exit = static_cast<int *>( malloc( sizeof( *csound_exit ) ) );
+    ( *csound_exit ) = 0;
+    queued_effects->clear();
     csoundInitialize( 0 );
+    queue_lock = csoundCreateThreadLock();
+    exit_lock = csoundCreateThreadLock();
+    csound_thread = csoundCreateThread( async_callback, nullptr );
     return true;
 }
 
 void cata_csound::shutdown_sound()
 {
+    csoundLockMutex( exit_lock );
+    ( *csound_exit ) = 1;
+    csoundUnlockMutex( exit_lock );
+    csoundJoinThread( csound_thread );
     for( auto &sfx : effects ) {
         for( csound_sval &s : sfx.second ) {
             csoundDestroy( s.sfx );
         }
     }
+    free( csound_exit );
+    csound_exit = nullptr;
+    csound_thread = nullptr;
+    queue_lock = nullptr;
+    exit_lock = nullptr;
+    queued_effects->clear();
 }
 
 static csound_sval *find_random_effect( const csound_skey &id_var_seas )
@@ -93,10 +147,10 @@ void cata_csound::play_variant_sfx( const std::string &id, const std::string &va
 {
     csound_sval *sfx = find_random_effect( id, variant, season );
     if( !!sfx ) {
-        csoundStart( sfx->sfx );
-        csoundPerform( sfx->sfx );
-        csoundSetScoreOffsetSeconds( sfx->sfx, 0 );
+        csoundLockMutex( queue_lock );
+        queued_effects->insert( queued_effects->begin(), sfx );
         csoundRewindScore( sfx->sfx );
+        csoundUnlockMutex( queue_lock );
     }
 }
 
