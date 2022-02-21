@@ -341,7 +341,7 @@ void load_sfx( const std::array<std::string, 3> &id_variant_season, int volume,
     const ::id_variant_season key = { id_variant_season[0], id_variant_season[1], id_variant_season[2] };
     auto &effects = sfx_resources.sound_effects[ key ];
 
-    for( const std::string file : files ) {
+    for( const std::string &file : files ) {
         sound_effect new_sound_effect;
         new_sound_effect.volume = volume;
         new_sound_effect.resource_id = add_sfx_path( file );

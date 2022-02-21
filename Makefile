@@ -205,6 +205,12 @@ else
   IS_WINDOWS_HOST = 0
 endif
 
+ARCH = $(shell uname -p)
+ARCH64 = 0
+ifneq ($(findstring x86_64,$(ARCH)),)
+  ARCH64 = 1
+endif
+
 OS = $(shell uname -s)
 
 ifneq ($(findstring Darwin,$(OS)),)
@@ -492,6 +498,7 @@ ifeq ($(NATIVE), linux64)
   CXXFLAGS += -m64
   LDFLAGS += -m64
   TARGETSYSTEM=LINUX
+  ARCH64 = 1
   ifeq ($(GOLD), 1)
     CXXFLAGS += -fuse-ld=gold
     LDFLAGS += -fuse-ld=gold -Wl,--detect-odr-violations
@@ -502,6 +509,7 @@ else
     CXXFLAGS += -m32
     LDFLAGS += -m32
     TARGETSYSTEM=LINUX
+    ARCH64 = 0
     ifeq ($(GOLD), 1)
       CXXFLAGS += -fuse-ld=gold
       LDFLAGS += -fuse-ld=gold -Wl,--detect-odr-violations
@@ -563,12 +571,14 @@ endif
 ifeq ($(NATIVE), win32)
 # Any reason not to use -m32 on MinGW32?
   TARGETSYSTEM=WINDOWS
+  ARCH64 = 0
 else
   # Win64 (MinGW-w64?)
   ifeq ($(NATIVE), win64)
     CXXFLAGS += -m64
     LDFLAGS += -m64
     TARGETSYSTEM=WINDOWS
+    ARCH64 = 1
   endif
 endif
 
@@ -586,6 +596,7 @@ endif
 ifneq (,$(findstring mingw32,$(CROSS)))
   DEFINES += -DCROSS_LINUX
   TARGETSYSTEM=WINDOWS
+  ARCH64 = 0
 endif
 
 ifneq ($(TARGETSYSTEM),WINDOWS)
@@ -624,6 +635,11 @@ endif
 
 PKG_CONFIG = $(CROSS)pkg-config
 
+LIBCSOUND = -lcsound64
+ifeq ($(ARCH64), 0)
+  LIBCSOUND = -lcsound
+endif
+
 ifeq ($(SOUND), 1)
   ifneq ($(TILES),1)
     $(error "SOUND=1 only works with TILES=1")
@@ -635,24 +651,24 @@ ifeq ($(SOUND), 1)
 		 -framework SDL2_mixer -framework Vorbis -framework Ogg
     else # libsdl build
       ifeq ($(MACPORTS), 1)
-        LDFLAGS += -lSDL2_mixer -lvorbisfile -lvorbis -logg -lcsound64
+        LDFLAGS += -lSDL2_mixer -lvorbisfile -lvorbis -logg $(LIBCSOUND)
       else # homebrew
         CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer)
         LDFLAGS += $(shell $(PKG_CONFIG) --libs SDL2_mixer)
-        LDFLAGS += -lvorbisfile -lvorbis -logg -lcsound64
+        LDFLAGS += -lvorbisfile -lvorbis -logg $(LIBCSOUND)
       endif
     endif
   else # not osx
-    CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer) -I/usr/include/csound
+    CXXFLAGS += $(shell $(PKG_CONFIG) --cflags SDL2_mixer) -I$(shell dirname $(shell find /usr -name 'csound.h' -type f))
     LDFLAGS += $(shell $(PKG_CONFIG) --libs SDL2_mixer)
-    LDFLAGS += -lpthread -lcsound64
+    LDFLAGS += -lpthread $(LIBCSOUND)
   endif
 
   ifeq ($(MSYS2),1)
-    LDFLAGS += -lmpg123 -lshlwapi -lvorbisfile -lvorbis -logg -lflac -lcsound64
+    LDFLAGS += -lmpg123 -lshlwapi -lvorbisfile -lvorbis -logg -lflac $(LIBCSOUND)
   endif
 
-  CXXFLAGS += -DSDL_SOUND -DCATA_CSOUND
+  CXXFLAGS += -DSDL_SOUND -DCATA_CSOUND $(if $(findstring 1, $(ARCH64)), -DUSE_DOUBLE,)
 endif
 
 ifeq ($(SDL), 1)
@@ -685,7 +701,7 @@ ifeq ($(TILES), 1)
       LDFLAGS += -framework Cocoa $(shell sdl2-config --libs) -lSDL2_ttf
       LDFLAGS += -lSDL2_image
       ifdef SOUND
-        LDFLAGS += -lSDL2_mixer -lcsound64
+        LDFLAGS += -lSDL2_mixer $(LIBCSOUND)
       endif
     endif
   else # not osx
