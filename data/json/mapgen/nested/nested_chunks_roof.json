@@ -327,7 +327,8 @@
         { "item": "jug_plastic", "x": 0, "y": 0 },
         { "item": "can_drink", "x": [ 0, 5 ], "y": [ 0, 5 ], "chance": 30, "repeat": [ 2, 3 ] },
         { "item": "can_food", "x": [ 0, 5 ], "y": [ 0, 5 ], "chance": 40, "repeat": [ 2, 3 ] }
-      ]
+      ],
+      "flags": [ "ERASE_ALL_BEFORE_PLACING_TERRAIN" ]
     }
   },
   {
