@@ -86,11 +86,11 @@ class main_menu
          * @param iSel Which index of vItems is selected. This menu item will be highlighted to
          * make it stand out from the other menu items.
          * @param offset Offset of menu items
-         * @param spacing: How many spaces to print between each menu item
+         * @param menu_width Width of the main menu's options window
          */
         void print_menu_items( const catacurses::window &w_in,
                                const std::vector<std::string> &vItems, size_t iSel,
-                               point offset, int spacing = 1 );
+                               point offset, int menu_width );
 
         /**
          * Called by @ref opening_screen, this prints all the text that you see on the main menu
@@ -98,8 +98,10 @@ class main_menu
          * @param w_open Window to print menu in
          * @param iSel which index in vMenuItems is selected
          * @param offset Menu location in window
+         * @param show_opts true if displaying main menu options
+         * (ex: when the player pressed a key on the splash screen)
          */
-        void print_menu( const catacurses::window &w_open, int iSel, const point &offset );
+        void print_menu( const catacurses::window &w_open, int iSel, const point &offset, bool show_opts );
 
         void display_text( const std::string &text, const std::string &title, int &selected );
 

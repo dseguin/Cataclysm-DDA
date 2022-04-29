@@ -94,31 +94,42 @@ static int utf8_width_notags( const char *s )
 
 void main_menu::print_menu_items( const catacurses::window &w_in,
                                   const std::vector<std::string> &vItems,
-                                  size_t iSel, point offset, int spacing )
+                                  size_t iSel, point offset, int menu_width )
 {
-    std::string text;
+    if( menu_width <= 0 ) {
+        return;
+    }
+
+    // clear menu background
+    for( int i = 0; i < menu_width; ++i ) {
+        for( size_t j = 0; j < vItems.size(); ++j ) {
+            mvwputch( w_in, offset + point( i, j ), c_unset, ' ' );
+        }
+    }
+
+    // draw menu border
+    border_helper bh;
+    bh.add_border().set( offset + point( catacurses::getbegx( w_in ), catacurses::getbegy( w_in ) ),
+    { menu_width, int( vItems.size() ) + 2 } );
+    bh.draw_border( w_in );
+
+    // draw menu text
     for( size_t i = 0; i < vItems.size(); ++i ) {
-        if( i > 0 ) {
-            text += std::string( spacing, ' ' );
-        }
-
-        std::string temp = shortcut_text( c_white, vItems[i] );
-        if( iSel == i ) {
-            text += string_format( "[%s]", colorize( remove_color_tags( temp ), h_white ) );
-        } else {
-            text += string_format( "[%s]", temp );
+        nc_color clr = i == iSel ? hilite( c_white ) : c_white;
+        std::string entstr = shortcut_text( clr, vItems[i] );
+        int pad = clamp( ( menu_width - 2 - utf8_width( entstr, true ) ) / 2, 0, menu_width - 2 );
+        entstr.insert( entstr.begin(), pad, ' ' );
+        pad = clamp( menu_width - 2 - utf8_width( entstr, true ), 0, menu_width - 2 );
+        entstr.insert( entstr.end(), pad, ' ' );
+        trim_and_print( w_in, offset + point( 1, i + 1 ), menu_width - 1, clr, entstr );
+        if( i == iSel ) {
+            mvwputch( w_in, offset + point( 1, i + 1 ), hilite( c_yellow ), "»" );
         }
     }
-
-    int text_width = utf8_width_notags( text.c_str() );
-    if( text_width > getmaxx( w_in ) ) {
-        offset.y -= std::ceil( text_width / getmaxx( w_in ) );
-    }
-
-    fold_and_print( w_in, offset, getmaxx( w_in ), c_light_gray, text, ']' );
 }
 
-void main_menu::print_menu( const catacurses::window &w_open, int iSel, const point &offset )
+void main_menu::print_menu( const catacurses::window &w_open, int iSel, const point &offset,
+                            bool show_opts )
 {
     // Clear Lines
     werase( w_open );
@@ -127,9 +138,8 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     int window_width = getmaxx( w_open );
     int window_height = getmaxy( w_open );
 
-    // Draw horizontal line
-    for( int i = 1; i < window_width - 1; ++i ) {
-        mvwputch( w_open, point( i, window_height - 4 ), c_white, LINE_OXOX );
+    if( !show_opts ) {
+        center_print( w_open, offset.y - 1, c_white, _( "[Press any key]" ) );
     }
 
     center_print( w_open, window_height - 2, c_red,
@@ -174,20 +184,20 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     center_print( w_open, iLine, c_light_blue, string_format( _( "Version: %s" ),
                   getVersionString() ) );
 
-    int menu_length = 0;
-    for( size_t i = 0; i < vMenuItems.size(); ++i ) {
-        menu_length += utf8_width_notags( vMenuItems[i].c_str() ) + 2;
-        if( !vMenuHotkeys[i].empty() ) {
-            menu_length += utf8_width( vMenuHotkeys[i][0] );
+    if( show_opts ) {
+        int menu_length = 0;
+        for( size_t i = 0; i < vMenuItems.size(); ++i ) {
+            int itlen = utf8_width_notags( vMenuItems[i].c_str() ) + 6;
+            if( !vMenuHotkeys[i].empty() ) {
+                itlen += utf8_width( vMenuHotkeys[i][0] );
+            }
+            menu_length = itlen > menu_length ? itlen : menu_length;
         }
-    }
-    const int free_space = std::max( 0, window_width - menu_length - offset.x );
-    const int spacing = free_space / ( static_cast<int>( vMenuItems.size() ) + 1 );
-    const int width_of_spacing = spacing * ( vMenuItems.size() + 1 );
-    const int adj_offset = std::max( 0, ( free_space - width_of_spacing ) / 2 );
-    const int final_offset = offset.x + adj_offset + spacing;
+        const int left = window_width / 2 - menu_length / 2;
+        const int top = offset.y - ( vMenuItems.size() + 2 );
 
-    print_menu_items( w_open, vMenuItems, iSel, point( final_offset, offset.y ), spacing );
+        print_menu_items( w_open, vMenuItems, iSel, point( left, top ), menu_length );
+    }
 
     wnoutrefresh( w_open );
 }
@@ -424,6 +434,7 @@ bool main_menu::opening_screen()
     // for the menu shortcuts
     ctxt.register_action( "ANY_INPUT" );
     bool start = false;
+    bool on_splash_screen = true;
 
     avatar &player_character = get_avatar();
     player_character = avatar();
@@ -439,7 +450,7 @@ bool main_menu::opening_screen()
 
     ui_adaptor ui;
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        print_menu( w_open, sel1, menu_offset );
+        print_menu( w_open, sel1, menu_offset, !on_splash_screen );
 
         if( layer == 1 ) {
             if( sel1 == 0 ) { // Print MOTD.
@@ -458,7 +469,7 @@ bool main_menu::opening_screen()
                 }
                 xlen += special_names.size() - 1;
                 point offset( menu_offset + point( -( xlen / 4 ) + 32 + extra_w / 2, -2 ) );
-                print_menu_items( w_open, special_names, sel2, offset );
+                print_menu_items( w_open, special_names, sel2, offset, 0 );
 
                 wnoutrefresh( w_open );
             } else if( sel1 == 5 ) {  // Settings Menu
@@ -475,7 +486,7 @@ bool main_menu::opening_screen()
                 if( settings_subs.size() > 1 ) {
                     offset.x -= 6;
                 }
-                print_menu_items( w_open, settings_subs, sel2, offset );
+                print_menu_items( w_open, settings_subs, sel2, offset, 0 );
                 wnoutrefresh( w_open );
             }
         }
@@ -492,71 +503,84 @@ bool main_menu::opening_screen()
         if( layer == 1 ) {
             std::string action = ctxt.handle_input();
 
-            std::string sInput = ctxt.get_raw_input().text;
+            input_event sInput = ctxt.get_raw_input();
 
-            // check automatic menu shortcuts
-            for( size_t i = 0; i < vMenuHotkeys.size(); ++i ) {
-                for( const std::string &hotkey : vMenuHotkeys[i] ) {
-                    if( sInput == hotkey ) {
-                        sel1 = i;
+            if( on_splash_screen ) {
+                if( action == "QUIT" ) {
+                    if( query_yn( _( "Really quit?" ) ) ) {
+                        sel1 = 8;
                         action = "CONFIRM";
+                        return false;
+                    }
+                } else if( sInput.type == input_event_t::keyboard_char ||
+                           sInput.type == input_event_t::keyboard_code ||
+                           sInput.type == input_event_t::gamepad ) {
+                    on_splash_screen = false;
+                }
+            } else {
+                // check automatic menu shortcuts
+                for( size_t i = 0; i < vMenuHotkeys.size(); ++i ) {
+                    for( const std::string &hotkey : vMenuHotkeys[i] ) {
+                        if( sInput.text == hotkey ) {
+                            sel1 = i;
+                            action = "CONFIRM";
+                        }
                     }
                 }
-            }
-            // also check special keys
-            if( action == "QUIT" ) {
-                if( query_yn( _( "Really quit?" ) ) ) {
-                    sel1 = 8;
-                    action = "CONFIRM";
-                }
-            } else if( action == "LEFT" || action == "PREV_TAB" ) {
-                sel_line = 0;
-                if( sel1 > 0 ) {
-                    sel1--;
-                } else {
-                    sel1 = 8;
-                }
-                on_move();
-            } else if( action == "RIGHT" || action == "NEXT_TAB" ) {
-                sel_line = 0;
-                if( sel1 < 8 ) {
-                    sel1++;
-                } else {
-                    sel1 = 0;
-                }
-                on_move();
-            }
-
-            if( ( sel1 == 0 || sel1 == 7 ) && ( action == "UP" || action == "DOWN" ||
-                                                action == "PAGE_UP" || action == "PAGE_DOWN" ) ) {
-                if( action == "UP" || action == "PAGE_UP" ) {
-                    sel_line--;
+                // also check special keys
+                if( action == "QUIT" ) {
+                    on_splash_screen = true;
+                    sel1 = 1;
+                    action = "";
+                } else if( action == "UP" || action == "PAGE_UP" ) {
+                    sel_line = 0;
+                    if( sel1 > 0 ) {
+                        sel1--;
+                    } else {
+                        sel1 = 8;
+                    }
+                    on_move();
                 } else if( action == "DOWN" || action == "PAGE_DOWN" ) {
-                    sel_line++;
+                    sel_line = 0;
+                    if( sel1 < 8 ) {
+                        sel1++;
+                    } else {
+                        sel1 = 0;
+                    }
+                    on_move();
                 }
 
-            }
-            if( ( action == "UP" || action == "CONFIRM" ) && sel1 != 0 && sel1 != 7 ) {
-                if( sel1 == 6 ) {
-                    get_help().display_help();
-                } else if( sel1 == 8 ) {
-                    return false;
-                } else {
-                    sel2 = 0;
-                    layer = 2;
+                if( ( sel1 == 0 || sel1 == 7 ) && ( action == "UP" || action == "DOWN" ||
+                                                    action == "PAGE_UP" || action == "PAGE_DOWN" ) ) {
+                    if( action == "RIGHT" || action == "NEXT_TAB" ) {
+                        sel_line--;
+                    } else if( action == "LEFT" || action == "PREV_TAB" ) {
+                        sel_line++;
+                    }
 
-                    switch( sel1 ) {
-                        case 1:
-                            start = new_character_tab();
-                            break;
-                        case 2:
-                            start = load_character_tab();
-                            break;
-                        case 3:
-                            world_tab();
-                            break;
-                        default:
-                            break;
+                }
+                if( ( action == "RIGHT" || action == "CONFIRM" ) && sel1 != 0 && sel1 != 7 ) {
+                    if( sel1 == 6 ) {
+                        get_help().display_help();
+                    } else if( sel1 == 8 ) {
+                        return false;
+                    } else {
+                        sel2 = 0;
+                        layer = 2;
+
+                        switch( sel1 ) {
+                            case 1:
+                                start = new_character_tab();
+                                break;
+                            case 2:
+                                start = load_character_tab();
+                                break;
+                            case 3:
+                                world_tab();
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }
@@ -695,12 +719,12 @@ bool main_menu::new_character_tab()
 
     ui_adaptor ui;
     ui.on_redraw( [&]( const ui_adaptor & ) {
-        print_menu( w_open, 1, menu_offset );
+        print_menu( w_open, 1, menu_offset, true );
 
         if( layer == 2 && sel1 == 1 ) {
             center_print( w_open, getmaxy( w_open ) - 7, c_yellow, hints[sel2] );
 
-            print_menu_items( w_open, vSubItems, sel2, menu_offset + point( 0, -2 ) );
+            print_menu_items( w_open, vSubItems, sel2, menu_offset + point( 0, -2 ), 0 );
             wnoutrefresh( w_open );
         } else if( layer == 3 && sel1 == 1 ) {
             // Then view presets
@@ -932,7 +956,7 @@ bool main_menu::load_character_tab( bool transfer )
     ui.on_redraw( [&]( const ui_adaptor & ) {
         const point offset( transfer ? 25 : 15, transfer ? -1 : 0 );
 
-        print_menu( w_open, transfer ? 3 : 2, menu_offset );
+        print_menu( w_open, transfer ? 3 : 2, menu_offset, true );
 
         if( layer == 2 && sel1 == 2 ) {
             if( all_worldnames.empty() ) {
@@ -1097,7 +1121,7 @@ void main_menu::world_tab()
     ui_adaptor ui;
     ui.on_redraw( [this]( const ui_adaptor & ) {
         if( sel1 == 3 ) { // bail out if we're actually in load_character_tab
-            print_menu( w_open, 3, menu_offset );
+            print_menu( w_open, 3, menu_offset, true );
 
             if( layer == 3 ) { // World Menu
                 const point offset = menu_offset + point( 40 + extra_w / 2, -2 - sel2 );
