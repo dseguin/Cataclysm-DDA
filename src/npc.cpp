@@ -3284,7 +3284,8 @@ float npc::speed_rating() const
     return ret;
 }
 
-bool npc::dispose_item( item_location &&obj, const std::string & )
+bool npc::dispose_item( item_location &&obj, const std::string &,
+                        const std::function<void( item_location & )> & )
 {
     stow_item( *obj.get_item() );
     return true;

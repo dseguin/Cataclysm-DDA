@@ -7118,7 +7118,7 @@ bool Character::has_wield_conflicts( const item &it ) const
     return is_wielding( it ) || ( is_armed() && !it.can_combine( weapon ) );
 }
 
-bool Character::unwield()
+bool Character::unwield( const std::function<void( item_location & )> &before_dispose )
 {
     if( weapon.is_null() ) {
         return true;
@@ -7136,7 +7136,7 @@ bool Character::unwield()
 
     const std::string query = string_format( _( "Stop wielding %s?" ), weapon.tname() );
 
-    if( !dispose_item( item_location( *this, &weapon ), query ) ) {
+    if( !dispose_item( item_location( *this, &weapon ), query, before_dispose ) ) {
         return false;
     }
 
@@ -11150,13 +11150,6 @@ bool Character::wield_contents( item &container, item *internal_item, bool penal
 
     int mv = 0;
 
-    if( has_wield_conflicts( *internal_item ) ) {
-        if( !unwield() ) {
-            return false;
-        }
-        inv->unsort();
-    }
-
     // for holsters, we should not include the cost of wielding the holster itself
     // The cost of wielding the holster was already added earlier in avatar_action::use_item.
     // As we couldn't make sure back then what action was going to be used, we remove the cost now.
@@ -11164,13 +11157,33 @@ bool Character::wield_contents( item &container, item *internal_item, bool penal
     mv -= il.obtain_cost( *this );
     mv += item_retrieve_cost( *internal_item, container, penalties, base_cost );
 
-    if( internal_item->stacks_with( weapon, true ) ) {
-        weapon.combine( *internal_item );
-    } else {
-        weapon = std::move( *internal_item );
+    item new_it = std::move( *internal_item );
+    bool wielded_nested_cont = !weapon.is_null() && weapon.has_item( container );
+    if( has_wield_conflicts( new_it ) ) {
+        // If the item is contained in the held item, the references to both will be lost after
+        // unwielding. Do any operations while we still have these references.
+        auto before_dispose = [wielded_nested_cont, internal_item]( item_location & it_loc ) {
+            if( wielded_nested_cont ) {
+                it_loc->remove_item( *internal_item );
+                it_loc->on_contents_changed();
+            }
+        };
+        if( !unwield( before_dispose ) ) {
+            *internal_item = std::move( new_it );
+            return false;
+        }
+        inv->unsort();
     }
-    container.remove_item( *internal_item );
-    container.on_contents_changed();
+
+    if( new_it.stacks_with( weapon, true ) ) {
+        weapon.combine( new_it );
+    } else {
+        weapon = std::move( new_it );
+    }
+    if( !wielded_nested_cont ) {
+        container.remove_item( new_it );
+        container.on_contents_changed();
+    }
 
     inv->update_invlet( weapon );
     inv->update_cache_with_item( weapon );

@@ -1165,7 +1165,7 @@ void avatar_action::use_item( avatar &you, item_location &loc )
     } else {
         you.use( loc, pre_obtain_moves );
 
-        if( parent_pocket && on_person && parent_pocket->will_spill() ) {
+        if( parent_pocket && on_person && !!loc && loc.has_parent() && parent_pocket->will_spill() ) {
             parent_pocket->handle_liquid_or_spill( you );
         }
     }

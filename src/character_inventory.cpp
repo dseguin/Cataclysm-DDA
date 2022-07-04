@@ -536,7 +536,8 @@ void outfit::holster_opts( std::vector<dispose_option> &opts, item_location obj,
     }
 }
 
-bool Character::dispose_item( item_location &&obj, const std::string &prompt )
+bool Character::dispose_item( item_location &&obj, const std::string &prompt,
+                              const std::function<void( item_location & )> &before_dispose )
 {
     uilist menu;
     menu.text = prompt.empty() ? string_format( _( "Dispose of %s" ), obj->tname() ) : prompt;
@@ -605,6 +606,9 @@ bool Character::dispose_item( item_location &&obj, const std::string &prompt )
 
     menu.query();
     if( menu.ret >= 0 ) {
+        if( !!before_dispose ) {
+            before_dispose( obj );
+        }
         return opts[menu.ret].action();
     }
     return false;

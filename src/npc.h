@@ -1106,7 +1106,8 @@ class npc : public Character
         item_location find_usable_ammo( const item &weap );
         item_location find_usable_ammo( const item &weap ) const;
 
-        bool dispose_item( item_location &&obj, const std::string &prompt = std::string() ) override;
+        bool dispose_item( item_location &&obj, const std::string &prompt = std::string(),
+                           const std::function<void( item_location & )> &before_dispose = nullptr ) override;
 
         void update_cardio_acc() override {};
 

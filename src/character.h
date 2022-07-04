@@ -1030,7 +1030,7 @@ class Character : public Creature, public visitable
          */
         ret_val<bool> can_wield( const item &it ) const;
 
-        bool unwield();
+        bool unwield( const std::function<void( item_location & )> &before_dispose = nullptr );
 
         /** Get the formatted name of the currently wielded item (if any) with current gun mode (if gun) */
         std::string weapname() const;
@@ -1670,9 +1670,11 @@ class Character : public Creature, public visitable
          * Drop, wear, stash or otherwise try to dispose of an item consuming appropriate moves
          * @param obj item to dispose of
          * @param prompt optional message to display in any menu
+         * @param before_dispose optional callback to run on the item before it's removed (if at all)
          * @return whether the item was successfully disposed of
          */
-        virtual bool dispose_item( item_location &&obj, const std::string &prompt = std::string() );
+        virtual bool dispose_item( item_location &&obj, const std::string &prompt = std::string(),
+                                   const std::function<void( item_location & )> &before_dispose = nullptr );
 
         /** Consume charges of a tool or comestible item, potentially destroying it in the process
          *  @param used item consuming the charges
