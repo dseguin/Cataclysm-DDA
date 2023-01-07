@@ -21,8 +21,7 @@ jobs:
         env:
           CURR_DATE: ${{ steps.current-date.outputs.formattedTime }}
         run: |
-          cat ${{ secrets.TX_TOKEN }} > /tmp/reptok
-          tools/generate_changelog.py -f --by-date /tmp/changelog.txt -t /tmp/reptok "$(date -d "@$(( $(date +%s -d $CURR_DATE) - (60*60*24*7) ))" +"%Y-%m-%d")"
+          tools/generate_changelog.py -f --by-date /tmp/changelog.txt -T "${{ secrets.TX_TOKEN }}" "$(date -d "@$(( $(date +%s -d $CURR_DATE) - (60*60*24*7) ))" +"%Y-%m-%d")"
           tac /tmp/changelog.txt > /tmp/changelog_rev.txt
           tools/merge_summaries.sh /tmp/changelog_rev.txt data/changelog.txt
           echo "::set-output name=date::$( date +"%Y-%m-%d" -d $CURR_DATE )"
