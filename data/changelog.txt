@@ -7,14 +7,29 @@
 ## Features:
 
 ## Content:
+Added / adjusted craft/uncraft recipes for fishing tools
 
 ## Interface:
 
 ## Mods:
+Add Endless Teapot
 
 ## Balance:
+Adds assorted costumes to the objective of the Cosplay mission.
 
 ## Bugfixes:
+Fixes up the Exodii base
+fix max weight for drop leg pouches
+Misc mapgen fixes
+evac shelter pencils now spawn with graphite
+Add messages for more cases of pocket overflow
+Edits the Magiclysm Devour spell scroll to properly teach the spell Devour instead of Rupture
+Change vehicle workbench `OBSTACLE` tag to `MOUNTABLE`
+Fix no scenario CTD
+Fix wrong amount of attempts to locate nemesis
+[Innawood] Remove adze from tools_common_small item group
+Crafting GUI: show how much recipe makes for non-charge items
+Fix erroneous result volume display in crafting gui
 
 ## Performance:
 
