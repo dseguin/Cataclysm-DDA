@@ -41,7 +41,7 @@ jobs:
           delete-branch: true
           base: master
           title: Weekly Changelog ${{ steps.getting-changes.outputs.date }}
-          body: "#### Summary\nNone\n"
+          body: "#### Summary\nNone\n\n#### Additional context\n`Automatically generated as a draft. Please copy-edit before merging.`"
           labels: Organization,<Documentation>
           # create as a draft to allow maintainers to cull the changes before merging
           draft: true
