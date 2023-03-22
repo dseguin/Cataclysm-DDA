@@ -5,17 +5,42 @@
 ## Statistics
 
 ## Features:
+EOC's can trigger achievements
+Allow player to easily and cleanly kill friendly farm animals
+More monster special attack logic
 
 ## Content:
 Added / adjusted craft/uncraft recipes for fishing tools
+Added PSL rifle
+Megastore cleanup
+Small bunker update
+Updates more offices with office-related furniture
+Update Occupied Lumbermills
+Sugar house expansion
+Add Bungalows 21 and 22
+Various additions and tweaks relating to Native American Heritage
+Add a drug lab
+Environmental storytelling about what children in the cataclysm had to go through
+Finish part 2 of the netherium monster corpse
+Completes the parking garage
+Office tower 2 overhaul
 
 ## Interface:
+Add pockets/collar/hood items to body status for relevant parts
+Fixed pocket contents displaying each item seperately
+Add two travel-related overmap keybinds for a better UX
 
 ## Mods:
 Add Endless Teapot
 
 ## Balance:
 Adds assorted costumes to the objective of the Cosplay mission.
+Give zombie soldier drops attachments & 40mm grenades
+tweaks to electric jackhammer's power costs
+greatly reduce the severity of nyctophobia, also removing hallucinations from it
+Makes tinder easier to craft
+Cost parity for mod mutations
+Remove zombie technician's pull ability and normalize its properties.
 
 ## Bugfixes:
 Fixes up the Exodii base
@@ -30,12 +55,42 @@ Fix wrong amount of attempts to locate nemesis
 [Innawood] Remove adze from tools_common_small item group
 Crafting GUI: show how much recipe makes for non-charge items
 Fix erroneous result volume display in crafting gui
+Reinforced security cameras now no longer draw 10 kW
+Fix far-sighted butlers spawning without reading glasses
+Item category spawn roll
+Make the Crusader attunement's Sword of Judgement sheathable
+Rectify incorrect densities of steel resource items
+Update known_bad_density.json
+Fixed truncation in monster list ui
+Resolved stat display error during character creation
+Disallow working on vehicle wheels in water
+Added "ammo": [ "battery" ]," line to microwave tool
+Make vehicle mass calculation aware of monster moving
+[Magiclysm] Fix fist weapons
+Fixes the situation where stat mods affect the displayed effects of your base stats.
+Add Dense Bones and Dromeosaur Muzzle to extra mut scen mod
+Straw Beds give more straw piles when deconstructed, up to 80%-90% of required instead of just 5%
+Intercom should sell the same set of UHMWPE armor.
+Fix `zinc_metal` stats (and cascade effects)
+Fix atomic coffeepot being unable to use batteries
+Expanded Digestive System cancels Meat Intolerance
+Correct cost of boiled makeshift bandage
+Follower NPCs shouldn't have static NPC traits
+Higher skill speeds up spell learn time instead of slowing down
+#64308
+Fix vehicle cheevos not handling reverse (negative) velocities correctly
 
 ## Performance:
 
 ## Infrastructure:
+More comparators for `event_transformation` `value_constraints`
+Convert build to C++17 (from C++14)
+Set OSX_MIN on CI to match release workflow
+Add Makefile option to compile in order of header popularity
+Refactor misleading variable name `vehicle::is_floating`
 
 ## Build:
+Set Linux release builds to Ubuntu 20.04
 
 ## I18N and A11Y:
 
