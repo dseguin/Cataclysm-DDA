@@ -4,6 +4,7 @@
 
 #include "debug.h"
 #include "event_subscriber.h"
+#include "achievement_steam.h"
 
 event_subscriber::~event_subscriber()
 {
