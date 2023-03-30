@@ -920,7 +920,7 @@ ifeq ($(LTO), 1)
   endif
 endif
 
-LDFLAGS += -lz
+LDFLAGS += -lz -lsteam_api
 
 all: version prefix $(CHECKS) $(TARGET) $(L10N) $(TESTS)
 	@
